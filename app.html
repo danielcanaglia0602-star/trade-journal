@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>TradeDiario: il tuo journal</title>
+<style>
+:root{--bg:#f4f1ea;--panel:#fbfaf6;--ink:#1a1d21;--mute:#5c6168;--line:#d9d4c7;--gain:#1d7a4f;--loss:#b03a3a;--accent:#1f4d3a;--accent-ink:#f4f1ea;color-scheme:light;box-sizing:border-box}
+@media (prefers-color-scheme:dark){:root{--bg:#121416;--panel:#1a1e21;--ink:#ecebe6;--mute:#9a9da2;--line:#2b2f33;--gain:#7fd1ae;--loss:#ff8a8a;--accent:#7fd1ae;--accent-ink:#121416;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.5 system-ui,sans-serif;font-variant-numeric:tabular-nums}
+h1,h2{font-family:Georgia,"Source Serif 4",serif;font-weight:700;margin:0}
+h1{font-size:28px}h2{font-size:18px;margin-bottom:10px}
+.top{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--line);gap:12px;flex-wrap:wrap}
+.top a{color:var(--mute);font-size:14px}
+.wrap{max-width:1180px;margin:0 auto;padding:24px 16px 48px;display:grid;gap:20px;grid-template-columns:300px 1fr;align-items:start}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:18px;min-width:0}
+form{display:grid;gap:12px}
+label{display:grid;gap:4px;font-size:13px;color:var(--mute);font-weight:500}
+input,textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:8px 10px;width:100%}
+textarea{resize:vertical;min-height:50px}
+input:focus-visible,textarea:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg label{padding:8px;text-align:center;cursor:pointer;margin:0;color:var(--mute)}
+.seg input:checked+label{background:var(--accent);color:var(--accent-ink)}
+.seg input:focus-visible+label{outline:2px solid var(--ink);outline-offset:-3px}
+button{font:inherit;font-weight:600;cursor:pointer;border-radius:4px;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);padding:10px 14px}
+button.ghost{background:transparent;color:var(--ink);border-color:var(--line);font-weight:500;padding:5px 9px;font-size:13px}
+button:disabled{opacity:.6;cursor:wait}
+.msg{font-size:13px;min-height:18px;color:var(--loss)}
+.ok{color:var(--gain)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:6px;overflow:hidden;margin-bottom:0}
+.stat{background:var(--panel);padding:14px}
+.stat span{display:block;font-size:12px;color:var(--mute)}
+.stat b{font:700 21px Georgia,serif}
+.pos{color:var(--gain)}.neg{color:var(--loss)}
+.chart{width:100%;height:auto;display:block}
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:620px}
+th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:12px;color:var(--mute);font-weight:500}
+td.n,th.n{text-align:right}
+td.note{white-space:normal;color:var(--mute);max-width:220px}
+.empty{padding:28px 8px;text-align:center;color:var(--mute)}
+.hidden{display:none!important}
+main{display:grid;gap:20px;min-width:0}
+@media (max-width:860px){.wrap{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="top">
+  <h1>TradeDiario</h1>
+  <div><span id="who" class="hidden" style="color:var(--mute);font-size:14px;margin-right:12px"></span><button id="logout" class="ghost hidden" type="button">Esci</button></div>
+</div>
+
+<!-- Schermata di accesso -->
+<section id="authView" class="wrap hidden" style="grid-template-columns:1fr;max-width:420px">
+  <div class="panel">
+    <h2 id="authTitle">Accedi</h2>
+    <form id="authForm">
+      <label>Email<input type="email" id="email" required autocomplete="email"></label>
+      <label>Password<input type="password" id="password" required minlength="8" autocomplete="current-password"></label>
+      <div class="msg" id="authMsg" role="alert"></div>
+      <button type="submit" id="authBtn">Accedi</button>
+      <button type="button" class="ghost" id="toggleAuth">Non hai un account? Registrati</button>
+    </form>
+  </div>
+</section>
+
+<!-- App principale -->
+<div id="appView" class="wrap hidden">
+  <form id="tradeForm" class="panel" autocomplete="off">
+    <h2>Nuova operazione</h2>
+    <div class="row">
+      <label>Data<input type="date" id="date" required></label>
+      <label>Strumento<input id="sym" placeholder="EURUSD" required maxlength="16"></label>
+    </div>
+    <div class="seg" role="radiogroup" aria-label="Direzione">
+      <input type="radio" name="dir" id="long" value="long" checked><label for="long">Long</label>
+      <input type="radio" name="dir" id="short" value="short"><label for="short">Short</label>
+    </div>
+    <div class="row">
+      <label>Ingresso<input type="number" id="entry" step="any" required></label>
+      <label>Uscita<input type="number" id="exit" step="any" required></label>
+    </div>
+    <div class="row">
+      <label>Quantità<input type="number" id="size" step="any" min="0.0000001" required></label>
+      <label>Commissioni<input type="number" id="fees" step="any" min="0" value="0"></label>
+    </div>
+    <label>Note<textarea id="note" maxlength="1000" placeholder="Setup, errori, emozioni…"></textarea></label>
+    <div class="msg" id="tradeMsg" role="alert"></div>
+    <button type="submit" id="saveBtn">Salva operazione</button>
+  </form>
+
+  <main>
+    <section class="stats" id="stats" aria-label="Statistiche"></section>
+    <section class="panel"><h2>Curva del capitale</h2><div id="eq"></div></section>
+    <section class="panel"><h2>Operazioni</h2><div class="tablewrap" id="list"></div></section>
+  </main>
+</div>
+
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+(function(){
+var cfg = window.TRADEDIARIO_CONFIG || {};
+var configured = cfg.SUPABASE_URL && cfg.SUPABASE_URL.indexOf("IL-TUO") === -1;
+var sb = configured ? supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY) : null;
+var trades = [], mode = "login", user = null;
+
+function $(i){return document.getElementById(i)}
+function fmt(n,d){d=d==null?2:d;return n.toLocaleString("it-IT",{minimumFractionDigits:d,maximumFractionDigits:d})}
+function sgn(n){return (n>0?"+":"")+fmt(n)}
+function cls(n){return n>0?"pos":n<0?"neg":""}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function pnl(t){return (t.dir==="long"?t.exit-t.entry:t.entry-t.exit)*t.size-t.fees}
+function sorted(){return trades.slice().sort(function(a,b){return a.trade_date<b.trade_date?-1:a.trade_date>b.trade_date?1:0})}
+function show(view){["authView","appView"].forEach(function(v){$(v).classList.toggle("hidden",v!==view)})}
+
+function renderStats(){
+  var p=sorted().map(pnl), w=p.filter(function(x){return x>0}), l=p.filter(function(x){return x<0});
+  var net=p.reduce(function(a,b){return a+b},0), gw=w.reduce(function(a,b){return a+b},0), gl=-l.reduce(function(a,b){return a+b},0);
+  var none=!p.length;
+  var items=[
+    ["Risultato netto", none?"—":sgn(net), none?"":cls(net)],
+    ["Operazioni vincenti", none?"—":fmt(w.length/p.length*100,0)+"% ("+w.length+"/"+p.length+")", ""],
+    ["Profit factor", none?"—":(gl>0?fmt(gw/gl):(gw>0?"∞":"—")), ""],
+    ["Attesa per operazione", none?"—":sgn(net/p.length), cls(net)],
+    ["Guadagno medio", w.length?sgn(gw/w.length):"—", "pos"],
+    ["Perdita media", l.length?sgn(-gl/l.length):"—", "neg"],
+    ["Migliore", none?"—":sgn(Math.max.apply(null,p)), none?"":cls(Math.max.apply(null,p))],
+    ["Peggiore", none?"—":sgn(Math.min.apply(null,p)), none?"":cls(Math.min.apply(null,p))]
+  ];
+  $("stats").innerHTML=items.map(function(i){return '<div class="stat"><span>'+i[0]+'</span><b class="'+i[2]+'">'+i[1]+'</b></div>'}).join("");
+}
+
+function renderEq(){
+  var s=sorted();
+  if(s.length<2){$("eq").innerHTML='<div class="empty">Servono almeno due operazioni per disegnare la curva.</div>';return}
+  var W=760,H=240,pl=56,pr=12,pt=12,pb=24,c=0,pts=[0];
+  s.forEach(function(t){c+=pnl(t);pts.push(c)});
+  var mn=Math.min.apply(null,pts),mx=Math.max.apply(null,pts);if(mx===mn){mx+=1;mn-=1}
+  var x=function(i){return pl+i*(W-pl-pr)/(pts.length-1)}, y=function(v){return pt+(mx-v)*(H-pt-pb)/(mx-mn)};
+  var d=pts.map(function(v,i){return (i?"L":"M")+x(i).toFixed(1)+" "+y(v).toFixed(1)}).join(" ");
+  var g="";
+  for(var k=0;k<=3;k++){var v=mn+(mx-mn)*k/3,yy=y(v);g+='<line x1="'+pl+'" x2="'+(W-pr)+'" y1="'+yy+'" y2="'+yy+'" stroke="var(--line)"/><text x="'+(pl-6)+'" y="'+(yy+4)+'" text-anchor="end" font-size="11" fill="var(--mute)">'+fmt(v,0)+'</text>'}
+  var col=c>=0?"var(--gain)":"var(--loss)";
+  $("eq").innerHTML='<svg class="chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Curva del capitale, risultato finale '+sgn(c)+'">'+g+
+    '<line x1="'+pl+'" x2="'+(W-pr)+'" y1="'+y(0)+'" y2="'+y(0)+'" stroke="var(--mute)" stroke-dasharray="3 3"/>'+
+    '<path d="'+d+'" fill="none" stroke="'+col+'" stroke-width="2.2" stroke-linejoin="round"/>'+
+    '<circle cx="'+x(pts.length-1)+'" cy="'+y(c)+'" r="4" fill="'+col+'"/>'+
+    '<text x="'+pl+'" y="'+(H-6)+'" font-size="11" fill="var(--mute)">'+esc(s[0].trade_date)+'</text>'+
+    '<text x="'+(W-pr)+'" y="'+(H-6)+'" text-anchor="end" font-size="11" fill="var(--mute)">'+esc(s[s.length-1].trade_date)+'</text></svg>';
+}
+
+function renderList(){
+  if(!trades.length){$("list").innerHTML='<div class="empty">Nessuna operazione ancora. Compila il modulo a sinistra per registrare la prima.</div>';return}
+  var rows=sorted().reverse().map(function(t){var p=pnl(t);
+    return '<tr><td>'+esc(t.trade_date)+'</td><td><b>'+esc(t.symbol)+'</b></td><td>'+(t.direction==="long"?"Long":"Short")+'</td><td class="n">'+fmt(t.entry_price,4)+'</td><td class="n">'+fmt(t.exit_price,4)+'</td><td class="n">'+fmt(t.size,2)+'</td><td class="n '+cls(p)+'"><b>'+sgn(p)+'</b></td><td class="note">'+esc(t.note||"")+'</td><td><button class="ghost" data-del="'+esc(t.id)+'" aria-label="Elimina operazione '+esc(t.symbol)+'">Elimina</button></td></tr>';
+  }).join("");
+  $("list").innerHTML='<table><thead><tr><th>Data</th><th>Strumento</th><th>Lato</th><th class="n">Ingresso</th><th class="n">Uscita</th><th class="n">Qtà</th><th class="n">Risultato</th><th>Note</th><th></th></tr></thead><tbody>'+rows+'</tbody></table>';
+}
+function render(){renderStats();renderEq();renderList()}
+
+async function loadTrades(){
+  var r=await sb.from("trades").select("*").order("trade_date",{ascending:true});
+  if(r.error){$("tradeMsg").textContent="Impossibile caricare le operazioni: "+r.error.message;return}
+  trades=r.data||[];render();
+}
+
+function enterApp(u){
+  user=u; $("who").textContent=u.email; $("who").classList.remove("hidden"); $("logout").classList.remove("hidden");
+  $("date").value=new Date().toISOString().slice(0,10);
+  show("appView"); loadTrades();
+}
+function enterAuth(){
+  user=null; trades=[]; $("who").classList.add("hidden"); $("logout").classList.add("hidden");
+  show("authView");
+}
+
+function setupMsg(){
+  $("authView").innerHTML='<div class="panel" style="max-width:420px;margin:24px auto"><h2>Configurazione mancante</h2><p>Inserisci URL e chiave Supabase in config.js.</p></div>';
+  show("authView");
+}
+
+$("toggleAuth").addEventListener("click",function(){
+  mode = mode==="login" ? "signup" : "login";
+  $("authTitle").textContent = mode==="login" ? "Accedi" : "Crea account";
+  $("authBtn").textContent = mode==="login" ? "Accedi" : "Registrati";
+  $("toggleAuth").textContent = mode==="login" ? "Non hai un account? Registrati" : "Hai già un account? Accedi";
+  $("authMsg").textContent="";
+});
+
+$("authForm").addEventListener("submit",async function(e){
+  e.preventDefault();
+  var btn=$("authBtn"); btn.disabled=true; $("authMsg").textContent="";
+  var email=$("email").value.trim(), password=$("password").value;
+  var r = mode==="login"
+    ? await sb.auth.signInWithPassword({email:email,password:password})
+    : await sb.auth.signUp({email:email,password:password});
+  btn.disabled=false;
+  if(r.error){$("authMsg").textContent=r.error.message;return}
+  if(mode==="signup" && !r.data.session){$("authMsg").classList.add("ok");$("authMsg").textContent="Ti abbiamo inviato un'email: conferma l'account, poi accedi.";return}
+  if(r.data.user) enterApp(r.data.user);
+});
+
+$("logout").addEventListener("click",async function(){await sb.auth.signOut();enterAuth()});
+
+$("tradeForm").addEventListener("submit",async function(e){
+  e.preventDefault();
+  var btn=$("saveBtn"); $("tradeMsg").textContent="";
+  var entry=parseFloat($("entry").value), exit=parseFloat($("exit").value), size=parseFloat($("size").value), fees=parseFloat($("fees").value)||0;
+  var sym=$("sym").value.trim().toUpperCase();
+  if(!sym||isNaN(entry)||isNaN(exit)||isNaN(size)||size<=0){$("tradeMsg").textContent="Controlla strumento, prezzi e quantità.";return}
+  btn.disabled=true;
+  var row={user_id:user.id,trade_date:$("date").value,symbol:sym,direction:document.querySelector('input[name="dir"]:checked').value,entry_price:entry,exit_price:exit,size:size,fees:fees,note:$("note").value.trim()};
+  var r=await sb.from("trades").insert(row).select().single();
+  btn.disabled=false;
+  if(r.error){$("tradeMsg").textContent="Salvataggio non riuscito: "+r.error.message;return}
+  trades.push(r.data); render();
+  ["sym","entry","exit","size","note"].forEach(function(i){$(i).value=""}); $("sym").focus();
+});
+
+$("list").addEventListener("click",async function(e){
+  var id=e.target.getAttribute&&e.target.getAttribute("data-del");
+  if(!id||!confirm("Eliminare questa operazione?"))return;
+  var r=await sb.from("trades").delete().eq("id",id);
+  if(r.error){$("tradeMsg").textContent="Eliminazione non riuscita: "+r.error.message;return}
+  trades=trades.filter(function(t){return t.id!==id}); render();
+});
+
+if(!configured){setupMsg()}
+else{
+  sb.auth.getSession().then(function(r){
+    if(r.data.session) enterApp(r.data.session.user); else enterAuth();
+  });
+}
+})();
+</script>
+</body>
+</html>
