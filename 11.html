@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>TradeDiario Replay</title>
+<style>
+:root{--bg:#f4f1ea;--side:#ebe7dd;--panel:#fbfaf6;--ink:#1a1d21;--mute:#5c6168;--line:#d9d4c7;--gain:#1d7a4f;--loss:#b03a3a;--accent:#1f4d3a;--accent-ink:#f4f1ea;color-scheme:light;box-sizing:border-box}
+@media (prefers-color-scheme:dark){:root{--bg:#121416;--side:#0d0f11;--panel:#1a1e21;--ink:#ecebe6;--mute:#9a9da2;--line:#2b2f33;--gain:#7fd1ae;--loss:#ff8a8a;--accent:#7fd1ae;--accent-ink:#121416;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 14px/1.5 system-ui,sans-serif;font-variant-numeric:tabular-nums}
+h1{font:700 22px Georgia,serif;margin:0}
+h2{font:700 16px Georgia,serif;margin:0 0 10px}
+.top{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-bottom:1px solid var(--line);gap:10px;flex-wrap:wrap}
+.top a{color:var(--mute);font-size:14px}
+.layout{display:grid;grid-template-columns:270px 1fr;gap:18px;padding:18px;align-items:start}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:16px;min-width:0}
+.panel+.panel{margin-top:14px}
+label{display:grid;gap:4px;font-size:12px;color:var(--mute);font-weight:500;margin-bottom:10px}
+input,select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:7px 9px;width:100%}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:-2px 0 10px}
+button{font:inherit;cursor:pointer;border-radius:4px;border:1px solid var(--line);background:transparent;color:var(--ink);padding:8px 10px}
+button.btn{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600;width:100%}
+button.buy{background:var(--gain);border-color:var(--gain);color:#fff;font-weight:600;flex:1}
+button.sell{background:var(--loss);border-color:var(--loss);color:#fff;font-weight:600;flex:1}
+button.small{padding:5px 8px;font-size:12px}
+button:disabled{opacity:.45;cursor:not-allowed}
+.btns{display:flex;gap:6px;margin-bottom:10px}
+.play{display:flex;gap:6px;align-items:center;margin-top:10px}
+.play button{flex:1}
+.msg{font-size:13px;color:var(--loss);min-height:18px;margin:6px 0}
+.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:6px;overflow:hidden;margin-bottom:14px}
+.kpi{background:var(--panel);padding:10px 12px}
+.kpi span{display:block;font-size:11px;color:var(--mute)}
+.kpi b{font:700 17px Georgia,serif}
+.pos{color:var(--gain)}.neg{color:var(--loss)}
+#chart{width:100%;height:460px;border-radius:6px;overflow:hidden}
+.when{color:var(--mute);font-size:13px;margin:0 0 8px}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:7px 6px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:12px;color:var(--mute);font-weight:500}
+td.n,th.n{text-align:right}
+.empty{padding:18px;text-align:center;color:var(--mute)}
+.hidden{display:none!important}
+@media (max-width:900px){
+ .layout{grid-template-columns:1fr}
+ .kpis{grid-template-columns:repeat(3,1fr)}
+}
+</style>
+</head>
+<body>
+<div class="top">
+  <h1>Replay</h1>
+  <a href="app.html">← Torna al journal</a>
+</div>
+
+<div class="layout">
+  <aside>
+    <section class="panel">
+      <h2>Impostazioni</h2>
+      <label>Mercato (simbolo)
+        <input id="sym" list="symbols" value="BTCUSDT" maxlength="20" autocomplete="off">
+      </label>
+      <datalist id="symbols">
+        <option value="BTCUSDT"><option value="ETHUSDT"><option value="SOLUSDT"><option value="BNBUSDT"><option value="XRPUSDT"><option value="DOGEUSDT"><option value="ADAUSDT">
+      </datalist>
+      <div class="row">
+        <label>Timeframe
+          <select id="tf">
+            <option value="1m">1 minuto</option><option value="5m">5 minuti</option><option value="15m">15 minuti</option>
+            <option value="1h" selected>1 ora</option><option value="4h">4 ore</option><option value="1d">1 giorno</option>
+          </select>
+        </label>
+        <label>Partenza
+          <input type="date" id="start" value="2024-01-01" min="2017-08-17">
+        </label>
+      </div>
+      <label>Capitale iniziale (USD)
+        <input type="number" id="capital" value="10000" min="100" step="100">
+      </label>
+      <div class="chips">
+        <button class="small" type="button" data-cap="10000">10k</button>
+        <button class="small" type="button" data-cap="50000">50k</button>
+        <button class="small" type="button" data-cap="100000">100k</button>
+      </div>
+      <button class="btn" type="button" id="startBtn">Avvia replay</button>
+      <div class="msg" id="startMsg" role="alert"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Ordine</h2>
+      <div class="btns">
+        <button class="buy" type="button" id="buyBtn" disabled>Long</button>
+        <button class="sell" type="button" id="sellBtn" disabled>Short</button>
+      </div>
+      <div class="row">
+        <label>Quantità<input type="number" id="qty" value="1" min="0.0001" step="any"></label>
+        <label>Stop loss<input type="number" id="sl" step="any" placeholder="facoltativo"></label>
+      </div>
+      <label>Take profit<input type="number" id="tp" step="any" placeholder="facoltativo"></label>
+      <button type="button" id="closeBtn" disabled style="width:100%">Chiudi posizione al prezzo attuale</button>
+      <div class="msg" id="orderMsg" role="alert"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Replay</h2>
+      <div class="play">
+        <button type="button" id="playBtn" disabled>▶ Play</button>
+        <button type="button" id="nextBtn" disabled>+1 candela</button>
+      </div>
+      <label style="margin-top:10px">Velocità
+        <select id="speed">
+          <option value="800">Lenta</option><option value="400" selected>Media</option><option value="150">Veloce</option>
+        </select>
+      </label>
+    </section>
+  </aside>
+
+  <main>
+    <div class="kpis">
+      <div class="kpi"><span>Saldo realizzato</span><b id="kBal">—</b></div>
+      <div class="kpi"><span>Equity</span><b id="kEq">—</b></div>
+      <div class="kpi"><span>P&amp;L aperto</span><b id="kOpen">—</b></div>
+      <div class="kpi"><span>Operazioni chiuse</span><b id="kN">—</b></div>
+      <div class="kpi"><span>Winrate</span><b id="kWin">—</b></div>
+      <div class="kpi"><span>Rendimento</span><b id="kRet">—</b></div>
+    </div>
+
+    <section class="panel">
+      <p class="when" id="when">Scegli mercato, data e capitale, poi premi Avvia replay.</p>
+      <div id="chart"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Operazioni chiuse</h2>
+      <div style="overflow-x:auto" id="tbl"><div class="empty">Nessuna operazione chiusa.</div></div>
+    </section>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
+<script>
+(function(){
+var BIN="https://api.binance.com/api/v3/klines";
+var FEE=0.001;
+var chart=null, cSeries=null, vSeries=null, maSeries=null;
+var all=[], cur=0, histLen=0, pos=null, closed=[], timer=null, capital=10000, balance=10000, loaded=false;
+
+function $(i){ return document.getElementById(i) }
+function fmt(n,d){ d=d==null?2:d; return n.toLocaleString("it-IT",{minimumFractionDigits:d,maximumFractionDigits:d}) }
+function sgn(n){ return (n>0?"+":"")+fmt(n) }
+function cls(n){ return n>0?"pos":n<0?"neg":"" }
+
+async function fetchKlines(sym,tf,startMs,endMs,limit){
+  var url=BIN+"?symbol="+encodeURIComponent(sym)+"&interval="+tf+"&limit="+limit+
+    (startMs!=null?"&startTime="+startMs:"")+(endMs!=null?"&endTime="+endMs:"");
+  var r=await fetch(url);
+  if(!r.ok){
+    var txt=await r.text();
+    throw new Error(txt.indexOf("Invalid symbol")>-1 ? "Simbolo non valido su Binance. Prova BTCUSDT." : "Dati non disponibili (codice "+r.status+"). Se sei in una zona che blocca Binance, il replay non funziona.");
+  }
+  var d=await r.json();
+  return d.map(function(k){ return {t:Math.floor(k[0]/1000),o:+k[1],h:+k[2],l:+k[3],c:+k[4],v:+k[5]} });
+}
+
+function sma(vis,n){
+  var out=[];
+  for(var i=n-1;i<vis.length;i++){
+    var s=0; for(var j=i-n+1;j<=i;j++) s+=vis[j].c;
+    out.push({time:vis[i].t,value:s/n});
+  }
+  return out;
+}
+
+function initChart(){
+  if(chart) return;
+  var el=$("chart");
+  chart=LightweightCharts.createChart(el,{
+    width:el.clientWidth, height:460,
+    layout:{background:{type:"solid",color:"transparent"},textColor:"#8b9099"},
+    grid:{vertLines:{color:"rgba(128,128,128,.12)"},horzLines:{color:"rgba(128,128,128,.12)"}},
+    timeScale:{timeVisible:true,secondsVisible:false,borderVisible:false},
+    rightPriceScale:{borderVisible:false}
+  });
+  cSeries=chart.addCandlestickSeries({upColor:"#1d7a4f",downColor:"#b03a3a",borderVisible:false,wickUpColor:"#1d7a4f",wickDownColor:"#b03a3a"});
+  maSeries=chart.addLineSeries({color:"#e0a040",lineWidth:1,priceLineVisible:false,lastValueVisible:false});
+  vSeries=chart.addHistogramSeries({priceFormat:{type:"volume"},priceScaleId:"vol"});
+  chart.priceScale("vol").applyOptions({scaleMargins:{top:0.8,bottom:0}});
+  window.addEventListener("resize",function(){ chart.applyOptions({width:el.clientWidth}) });
+}
+
+function draw(){
+  var vis=all.slice(0,cur+1);
+  cSeries.setData(vis.map(function(c){ return {time:c.t,open:c.o,high:c.h,low:c.l,close:c.c} }));
+  vSeries.setData(vis.map(function(c){ return {time:c.t,value:c.v,color:c.c>=c.o?"rgba(29,122,79,.4)":"rgba(176,58,58,.4)"} }));
+  maSeries.setData(sma(vis,20));
+  chart.timeScale().scrollToRealTime();
+}
+
+function unrealized(){
+  if(!pos) return 0;
+  var px=all[cur].c;
+  return (pos.side==="long"?px-pos.entry:pos.entry-px)*pos.qty - pos.fee;
+}
+
+function update(){
+  var open=unrealized(), eq=balance+open;
+  var realized=balance-capital;
+  $("kBal").textContent=fmt(balance)+" $";
+  $("kEq").textContent=fmt(eq)+" $";
+  $("kOpen").textContent=sgn(open)+" $"; $("kOpen").className=cls(open);
+  $("kN").textContent=closed.length;
+  var wins=closed.filter(function(t){return t.pnl>0}).length;
+  $("kWin").textContent=closed.length?fmt(wins/closed.length*100,1)+"%":"—";
+  $("kRet").textContent=sgn(eq/capital*100-100)+"%"; $("kRet").className=cls(eq-capital);
+  $("when").textContent="Candela del "+new Date(all[cur].t*1000).toLocaleString("it-IT")+" · Prezzo "+fmt(all[cur].c,2);
+  $("buyBtn").disabled=!!pos; $("sellBtn").disabled=!!pos;
+  $("closeBtn").disabled=!pos; $("nextBtn").disabled=!loaded||cur>=all.length-1;
+  $("playBtn").disabled=!loaded;
+  $("playBtn").textContent=timer?"❚❚ Pausa":"▶ Play";
+  renderTable();
+}
+
+function renderTable(){
+  if(!closed.length){ $("tbl").innerHTML='<div class="empty">Nessuna operazione chiusa.</div>'; return }
+  var rows=closed.slice().reverse().map(function(t){
+    return '<tr><td>'+(t.side==="long"?"Long":"Short")+'</td><td class="n">'+fmt(t.entry,2)+'</td><td class="n">'+fmt(t.exit,2)+'</td><td class="n">'+fmt(t.qty,4)+'</td><td class="n">'+t.reason+'</td><td class="n '+cls(t.pnl)+'"><b>'+sgn(t.pnl)+' $</b></td></tr>';
+  }).join("");
+  $("tbl").innerHTML='<table><thead><tr><th>Lato</th><th class="n">Ingresso</th><th class="n">Uscita</th><th class="n">Qtà</th><th class="n">Motivo</th><th class="n">Risultato</th></tr></thead><tbody>'+rows+'</tbody></table>';
+}
+
+function closePos(px,reason){
+  var gross=(pos.side==="long"?px-pos.entry:pos.entry-px)*pos.qty;
+  var fee=px*pos.qty*FEE;
+  var net=gross-pos.fee-fee;
+  balance+=net;
+  closed.push({side:pos.side,entry:pos.entry,exit:px,qty:pos.qty,pnl:net,reason:reason});
+  pos=null;
+}
+
+function step(){
+  if(!loaded) return false;
+  if(cur>=all.length-1){ stop(); update(); return false }
+  cur++;
+  var c=all[cur];
+  if(pos){
+    var hit=null;
+    if(pos.side==="long"){
+      if(pos.sl!=null && c.l<=pos.sl) hit=pos.sl;
+      else if(pos.tp!=null && c.h>=pos.tp) hit=pos.tp;
+    } else {
+      if(pos.sl!=null && c.h>=pos.sl) hit=pos.sl;
+      else if(pos.tp!=null && c.l<=pos.tp) hit=pos.tp;
+    }
+    if(hit!=null) closePos(hit, hit===pos.sl?"Stop loss":"Take profit");
+  }
+  draw(); update();
+  return true;
+}
+
+function play(){
+  if(timer) return;
+  timer=setInterval(function(){ if(!step()) stop() }, +$("speed").value);
+  update();
+}
+function stop(){
+  if(timer){ clearInterval(timer); timer=null }
+  update();
+}
+
+function openPos(side){
+  $("orderMsg").textContent="";
+  if(!loaded){ $("orderMsg").textContent="Avvia prima il replay."; return }
+  if(pos){ $("orderMsg").textContent="Hai già una posizione aperta."; return }
+  var qty=parseFloat($("qty").value), sl=parseFloat($("sl").value), tp=parseFloat($("tp").value);
+  var px=all[cur].c;
+  if(!(qty>0)){ $("orderMsg").textContent="Inserisci una quantità valida."; return }
+  if(qty*px>balance+0.0001){ $("orderMsg").textContent="Saldo insufficiente per questa quantità."; return }
+  if(!isNaN(sl) && (side==="long"?sl>=px:sl<=px)){ $("orderMsg").textContent="Lo stop loss deve stare sotto il prezzo per un long, sopra per uno short."; return }
+  if(!isNaN(tp) && (side==="long"?tp<=px:tp>=px)){ $("orderMsg").textContent="Il take profit deve stare sopra il prezzo per un long, sotto per uno short."; return }
+  pos={side:side,qty:qty,entry:px,fee:px*qty*FEE,sl:isNaN(sl)?null:sl,tp:isNaN(tp)?null:tp};
+  update();
+}
+
+async function start(){
+  $("startMsg").textContent="";
+  stop();
+  var sym=$("sym").value.trim().toUpperCase(), tf=$("tf").value;
+  var ds=$("start").value;
+  capital=parseFloat($("capital").value);
+  if(!sym){ $("startMsg").textContent="Inserisci un mercato."; return }
+  if(!ds){ $("startMsg").textContent="Scegli una data di partenza."; return }
+  if(!(capital>0)){ $("startMsg").textContent="Inserisci un capitale valido."; return }
+  var a=ds.split("-"), startMs=Date.UTC(+a[0],+a[1]-1,+a[2]);
+  $("startBtn").disabled=true; $("startBtn").textContent="Caricamento…";
+  try{
+    var hist=await fetchKlines(sym,tf,null,startMs-1,200);
+    var fwd=await fetchKlines(sym,tf,startMs,null,1000);
+    if(!fwd.length) throw new Error("Nessun dato disponibile da questa data. Prova una data più recente.");
+    all=hist.concat(fwd); histLen=hist.length; cur=histLen;
+    pos=null; closed=[]; balance=capital; loaded=true;
+    initChart(); draw(); update();
+    $("when").textContent="Replay "+sym+" "+tf+" · candele caricate: "+fwd.length+" · Premi Play o +1 candela.";
+  }catch(err){
+    $("startMsg").textContent=err.message||"Errore di caricamento.";
+  }finally{
+    $("startBtn").disabled=false; $("startBtn").textContent="Avvia replay";
+  }
+}
+
+/* Eventi */
+document.querySelectorAll("[data-cap]").forEach(function(b){
+  b.addEventListener("click",function(){ $("capital").value=b.getAttribute("data-cap") });
+});
+$("startBtn").addEventListener("click",start);
+$("buyBtn").addEventListener("click",function(){ openPos("long") });
+$("sellBtn").addEventListener("click",function(){ openPos("short") });
+$("closeBtn").addEventListener("click",function(){ if(pos){ closePos(all[cur].c,"Manuale"); draw(); update() } });
+$("nextBtn").addEventListener("click",function(){ stop(); step(); update() });
+$("playBtn").addEventListener("click",function(){ timer?stop():play() });
+$("speed").addEventListener("change",function(){ if(timer){ stop(); play() } });
+})();
+</script>
+</body>
+</html>
