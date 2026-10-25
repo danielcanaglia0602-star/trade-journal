@@ -706,6 +706,17 @@ th:last-child,td:last-child{padding-right:14px}
   .authbox h1{font-size:30px}
 }
 @media (prefers-reduced-motion:reduce){body::before{animation:none}}
+
+/* Operazioni: modulo in verticale a sinistra, lista a destra */
+.op-layout{display:grid;grid-template-columns:minmax(300px,380px) minmax(0,1fr);gap:22px;align-items:start}
+.op-col{display:flex;flex-direction:column;gap:18px;min-width:0}
+.op-col .panel{margin-bottom:0}
+.op-form{gap:14px}
+.op-form h2{margin-bottom:2px}
+.op-form .row{grid-template-columns:1fr 1fr}
+.op-form .seg{margin:2px 0}
+.op-form button.btn{width:100%}
+@media (max-width:1000px){.op-layout{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -769,7 +780,9 @@ th:last-child,td:last-child{padding-right:14px}
     <section id="v-operazioni" class="view hidden">
       <h1>Operazioni</h1>
       <p class="sub">Registra una operazione reale o consulta tutte quelle salvate.</p>
-      <form id="tradeForm" class="panel" autocomplete="off">
+      <div class="op-layout">
+      <div class="op-col">
+      <form id="tradeForm" class="panel op-form" autocomplete="off">
         <h2>Nuova operazione</h2>
         <div class="row">
           <label>Data<input type="date" id="date" required></label>
@@ -791,7 +804,7 @@ th:last-child,td:last-child{padding-right:14px}
         <div class="msg" id="tradeMsg" role="alert"></div>
         <div><button class="btn" type="submit" id="saveBtn">Salva operazione</button></div>
       </form>
-      <section class="panel" id="impPanel">
+      <section class="panel hidden" id="impPanel">
         <h2>Importa report</h2>
         <p class="muted" style="margin-bottom:12px">Esporta lo storico dalla piattaforma in formato CSV e caricalo qui. Le operazioni già presenti non vengono duplicate. Non serve nessuna password.</p>
         <div class="row">
@@ -814,7 +827,11 @@ th:last-child,td:last-child{padding-right:14px}
           <button class="btn" type="button" id="impGo" disabled>Importa operazioni</button>
         </div>
       </section>
+      </div>
+      <div class="op-col">
       <section class="panel"><h2>Tutte le operazioni reali</h2><div class="tablewrap" id="opList"></div></section>
+      </div>
+      </div>
     </section>
 
     <section id="v-backtest" class="view hidden">
