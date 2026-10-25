@@ -742,6 +742,65 @@ th:last-child,td:last-child{padding-right:14px}
 .g-mood.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--ink)}
 .g-area{margin-top:12px}
 @media (max-width:900px){.g-grid{grid-template-columns:1fr}.g-moods{grid-template-columns:repeat(5,1fr)}}
+
+/* Giornata: layout proprio */
+.gd-top{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;margin-bottom:26px}
+.gd-eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:700;margin:0 0 6px}
+.gd-title{font-size:30px;margin:0;text-transform:capitalize}
+.gd-nav{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.gd-nav input{width:auto}
+.gd-layout{display:grid;grid-template-columns:280px minmax(0,1fr);gap:26px;align-items:start}
+.gd-side{display:flex;flex-direction:column;gap:16px;position:sticky;top:18px}
+.gd-card{border:1px solid var(--line);border-radius:22px;padding:20px;background:color-mix(in srgb,var(--panel) 96%,transparent)}
+.gd-h{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin:0 0 12px;font-family:var(--font-body)}
+.gd-ring-card{text-align:center}
+.gd-ring{width:150px;height:150px;display:block;margin:0 auto}
+.gd-ring-txt{margin:10px 0 0;color:var(--mute);font-size:14px}
+.gd-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px;color:var(--mute)}
+.gd-row:last-child{border-bottom:0}
+.gd-row b{color:var(--ink);font-size:16px}
+.gd-scale{display:flex;justify-content:space-between;gap:6px}
+.gd-dot{background:none;border:0;padding:4px;display:grid;justify-items:center;gap:6px;cursor:pointer;color:var(--mute)}
+.gd-dot span{width:22px;height:22px;border-radius:50%;border:2px solid var(--line);transition:transform .25s,background .25s,border-color .25s}
+.gd-dot small{font-size:10.5px}
+.gd-dot:hover span{transform:scale(1.15)}
+.gd-dot.on span{background:linear-gradient(135deg,#22c55e,#3b82f6);border-color:transparent;transform:scale(1.2)}
+.gd-dot.on{color:var(--ink)}
+.gd-main{display:flex;flex-direction:column;gap:18px;min-width:0}
+.gd-phase{position:relative;border-radius:24px;padding:24px 26px;border:1px solid var(--line);background:color-mix(in srgb,var(--panel) 96%,transparent)}
+.gd-phase-h{display:flex;gap:16px;align-items:flex-start;margin-bottom:18px}
+.gd-phase-h h2{font-size:21px;margin:0 0 4px}
+.gd-phase-h p{margin:0;font-size:14px}
+.gd-num{font:700 13px var(--font-body);color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 40%,transparent);border-radius:10px;padding:6px 9px;flex:none}
+.gd-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.gd-chip{display:inline-flex;align-items:center;gap:8px;padding:7px 8px 7px 12px;border-radius:999px;border:1px solid var(--line);background:color-mix(in srgb,var(--bg) 50%,transparent);font-size:14px;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:400;color:var(--ink);margin:0}
+.gd-chip input{width:auto;accent-color:var(--gain)}
+.gd-chip.done span{text-decoration:line-through;color:var(--mute)}
+.gd-chip.done{border-color:color-mix(in srgb,var(--gain) 45%,transparent)}
+.gd-x{background:none;border:0;color:var(--mute);font-size:16px;padding:0 4px;line-height:1;cursor:pointer}
+.gd-x:hover{color:var(--loss)}
+.gd-add{display:flex;gap:10px;margin:8px 0 18px}
+.gd-add input{flex:1}
+.gd-add .btn{white-space:nowrap}
+.gd-empty{color:var(--mute);font-size:14px;margin:4px 0 8px;list-style:none}
+.gd-sub{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin:18px 0 10px;font-family:var(--font-body)}
+.gd-todo{list-style:none;padding:0;margin:0}
+.gd-todo li{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
+.gd-todo li label{display:flex;align-items:center;gap:10px;margin:0;text-transform:none;letter-spacing:0;font-weight:400;font-size:15px;color:var(--ink);cursor:pointer}
+.gd-todo li label input{width:auto;accent-color:var(--gain)}
+.gd-todo li.done span{text-decoration:line-through;color:var(--mute)}
+.gd-area{display:grid;gap:6px;margin-top:14px}
+.gd-area textarea{min-height:90px}
+@media (max-width:980px){
+  .gd-layout{grid-template-columns:1fr}
+  .gd-side{position:static;display:grid;grid-template-columns:1fr 1fr}
+  .gd-side .gd-ring-card{grid-row:span 2}
+}
+@media (max-width:600px){
+  .gd-side{grid-template-columns:1fr}
+  .gd-title{font-size:24px}
+  .gd-phase{padding:20px}
+}
 </style>
 </head>
 <body>
@@ -1465,40 +1524,71 @@ function renderOggi(){
   if(!gJ) gJ=jEmpty();
   var dt=trades.filter(function(t){return t.trade_date===gDate}),st=stats(dt);
   var ck=gJ.checklist,ckDone=ck.filter(function(x){return x.done}).length;
+  var td=gJ.todos,tdDone=td.filter(function(x){return x.done}).length;
+  var all=ck.length+td.length,allDone=ckDone+tdDone,pct=all?Math.round(allDone/all*100):0;
+  var C=2*Math.PI*46,dash=(pct/100*C).toFixed(1)+" "+C.toFixed(1);
   var moods=["Pessimo","Giù","Normale","Bene","Ottimo"];
   $("v-oggi").innerHTML=
-    '<h1>La mia giornata</h1><p class="sub">Prepara la sessione, segui la checklist e tieni traccia di quello che fai.</p>'+
-    '<section class="panel g-head"><button class="ghost" type="button" data-gday="-1" aria-label="Giorno precedente">‹</button>'+
-      '<div><span class="lab">'+(gDate===today()?"Oggi":"Giorno")+'</span><h2 class="g-title">'+esc(dayTitle(gDate))+'</h2></div>'+
-      '<span class="g-sp"></span><button class="ghost" type="button" data-gday="1" aria-label="Giorno successivo">›</button>'+
-      '<button class="ghost" type="button" data-gday="0">Oggi</button>'+
-      '<input type="date" id="gDatePick" value="'+esc(gDate)+'" style="width:auto"></section>'+
-    '<div class="stats">'+
-      gCard("Trade chiusi",st.n||0,st.n?"":"Nessuno in questo giorno")+
-      gCard("P&amp;L netto",st.n?sgn(st.net):"—",st.n?"":"Nessun risultato",st.n?cls(st.net):"")+
-      gCard("Win rate",st.n?fmt(st.winrate,0)+"%":"—",st.n?st.wins+" su "+st.n:"")+
-      gCard("Checklist",ck.length?ckDone+"/"+ck.length:"—",ck.length?"Voci completate":"Nessuna voce")+
-      gCard("Umore",gJ.mood?moods[gJ.mood-1]:"—","")+
+    '<div class="gd-top">'+
+      '<div><p class="gd-eyebrow">'+(gDate===today()?"Sessione di oggi":"Giornata passata")+'</p>'+
+      '<h1 class="gd-title">'+esc(dayTitle(gDate))+'</h1></div>'+
+      '<div class="gd-nav">'+
+        '<button class="ghost" type="button" data-gday="-1" aria-label="Giorno precedente">←</button>'+
+        '<button class="ghost" type="button" data-gday="0">Oggi</button>'+
+        '<button class="ghost" type="button" data-gday="1" aria-label="Giorno successivo">→</button>'+
+        '<input type="date" id="gDatePick" value="'+esc(gDate)+'" aria-label="Scegli la data">'+
+      '</div>'+
     '</div>'+
-    '<div class="g-grid"><div class="g-col">'+
-      '<section class="panel"><h2>Checklist pre-trading</h2><p class="muted g-note">Le domande da farti prima di aprire una posizione.</p>'+
-        gList(ck,"ck")+
-        '<div class="g-add"><input id="gCkNew" placeholder="Es. Il setup rispetta il piano?" maxlength="160"><button class="btn" type="button" data-add="ck">Aggiungi</button></div></section>'+
-      '<section class="panel"><h2>Cose da fare</h2>'+
-        gList(gJ.todos,"td")+
-        '<div class="g-add"><input id="gTdNew" placeholder="Nuova cosa da fare" maxlength="160"><button class="btn" type="button" data-add="td">Aggiungi</button></div></section>'+
-    '</div><div class="g-col">'+
-      '<section class="panel"><h2>Diario del giorno</h2>'+
-        '<span class="lab">Umore di oggi</span><div class="g-moods">'+
-        moods.map(function(m,i){return '<button type="button" class="g-mood'+(gJ.mood===i+1?' on':'')+'" data-mood="'+(i+1)+'"><b>'+(i+1)+'</b><small>'+m+'</small></button>'}).join("")+
-        '</div>'+
-        gArea("gPlan","Piano pre-mercato","Livelli, scenari, cosa aspetti e cosa NON farai.",gJ.plan)+
-        gArea("gDuring","Durante la sessione","Decisioni, emozioni, errori mentre operi.",gJ.during)+
-        gArea("gAfter","Dopo la sessione","Cosa è andato bene e cosa cambieresti.",gJ.after)+
-        gArea("gLessons","Lezioni","Una cosa da ricordare domani.",gJ.lessons)+
-        '<div class="msg" id="gMsg" role="status" style="margin-top:10px"></div>'+
-      '</section>'+
-    '</div></div>';
+    '<div class="gd-layout">'+
+      '<aside class="gd-side">'+
+        '<section class="gd-card gd-ring-card">'+
+          '<svg viewBox="0 0 120 120" class="gd-ring" aria-hidden="true">'+
+            '<circle cx="60" cy="60" r="46" fill="none" stroke="var(--line)" stroke-width="10"/>'+
+            '<circle cx="60" cy="60" r="46" fill="none" stroke="url(#gdg)" stroke-width="10" stroke-linecap="round" stroke-dasharray="'+dash+'" transform="rotate(-90 60 60)"/>'+
+            '<defs><linearGradient id="gdg" x1="0" x2="1"><stop offset="0" stop-color="#22c55e"/><stop offset="1" stop-color="#3b82f6"/></linearGradient></defs>'+
+            '<text x="60" y="66" text-anchor="middle" font-size="22" font-weight="700" fill="var(--ink)">'+pct+'%</text>'+
+          '</svg>'+
+          '<p class="gd-ring-txt">'+allDone+' di '+all+' impegni completati</p>'+
+        '</section>'+
+        '<section class="gd-card">'+
+          '<h3 class="gd-h">Il tuo giorno in numeri</h3>'+
+          '<div class="gd-row"><span>Operazioni chiuse</span><b>'+(st.n||0)+'</b></div>'+
+          '<div class="gd-row"><span>Risultato netto</span><b class="'+(st.n?cls(st.net):"")+'">'+(st.n?sgn(st.net):"—")+'</b></div>'+
+          '<div class="gd-row"><span>Operazioni vincenti</span><b>'+(st.n?st.wins+" su "+st.n:"—")+'</b></div>'+
+        '</section>'+
+        '<section class="gd-card">'+
+          '<h3 class="gd-h">Stato emotivo</h3>'+
+          '<div class="gd-scale">'+moods.map(function(m,i){
+            return '<button type="button" class="gd-dot'+(gJ.mood===i+1?' on':'')+'" data-mood="'+(i+1)+'" title="'+m+'" aria-label="'+m+'"><span></span><small>'+m+'</small></button>';
+          }).join("")+'</div>'+
+        '</section>'+
+      '</aside>'+
+      '<main class="gd-main">'+
+        '<section class="gd-phase">'+
+          '<div class="gd-phase-h"><span class="gd-num">01</span><div><h2>Preparazione</h2><p class="muted">Cosa controllare prima di toccare il mouse.</p></div></div>'+
+          '<div class="gd-chips">'+
+            (ck.length?ck.map(function(x,i){return '<label class="gd-chip'+(x.done?' done':'')+'"><input type="checkbox" data-tog="ck" data-i="'+i+'"'+(x.done?' checked':'')+'><span>'+esc(x.text)+'</span><button type="button" class="gd-x" data-delitem="ck" data-i="'+i+'" aria-label="Rimuovi">×</button></label>'}).join(""):'<p class="gd-empty">Nessuna domanda ancora. Aggiungi la prima qui sotto.</p>')+
+          '</div>'+
+          '<div class="gd-add"><input id="gCkNew" placeholder="Es. Il setup rispetta la strategia?" maxlength="160"><button class="btn" type="button" data-add="ck">Aggiungi</button></div>'+
+          '<h3 class="gd-sub">Obiettivi di oggi</h3>'+
+          '<ul class="gd-todo">'+
+            (td.length?td.map(function(x,i){return '<li class="'+(x.done?'done':'')+'"><label><input type="checkbox" data-tog="td" data-i="'+i+'"'+(x.done?' checked':'')+'><span>'+esc(x.text)+'</span></label><button type="button" class="gd-x" data-delitem="td" data-i="'+i+'" aria-label="Rimuovi">×</button></li>'}).join(""):'<li class="gd-empty">Nessun obiettivo ancora.</li>')+
+          '</ul>'+
+          '<div class="gd-add"><input id="gTdNew" placeholder="Nuovo obiettivo" maxlength="160"><button class="btn" type="button" data-add="td">Aggiungi</button></div>'+
+          '<label class="gd-area">Strategia e piano<textarea id="gPlan" rows="4" maxlength="4000" placeholder="Setup che cerchi, livelli chiave, scenario atteso e cosa NON farai.">'+esc(gJ.plan)+'</textarea></label>'+
+        '</section>'+
+        '<section class="gd-phase">'+
+          '<div class="gd-phase-h"><span class="gd-num">02</span><div><h2>Sessione</h2><p class="muted">Annota decisioni ed emozioni mentre operi.</p></div></div>'+
+          '<label class="gd-area">Durante<textarea id="gDuring" rows="4" maxlength="4000" placeholder="Cosa stai notando, quando sei tentato di uscire, quando esiti.">'+esc(gJ.during)+'</textarea></label>'+
+        '</section>'+
+        '<section class="gd-phase">'+
+          '<div class="gd-phase-h"><span class="gd-num">03</span><div><h2>Chiusura</h2><p class="muted">Rivedi la giornata e scegli cosa portarti a domani.</p></div></div>'+
+          '<label class="gd-area">Com\'è andata<textarea id="gAfter" rows="3" maxlength="4000" placeholder="Cosa ha funzionato e cosa cambieresti.">'+esc(gJ.after)+'</textarea></label>'+
+          '<label class="gd-area">Lezione da ricordare<textarea id="gLessons" rows="2" maxlength="4000" placeholder="Una sola frase che leggerai domani.">'+esc(gJ.lessons)+'</textarea></label>'+
+          '<div class="msg" id="gMsg" role="status" style="margin-top:12px"></div>'+
+        '</section>'+
+      '</main>'+
+    '</div>';
 }
 $("v-oggi").addEventListener("click",function(e){
   var t=e.target.closest("[data-gday],[data-mood],[data-add],[data-delitem]");
