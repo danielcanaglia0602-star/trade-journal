@@ -734,7 +734,7 @@ th:last-child,td:last-child{padding-right:14px}
       <button type="button" data-view="oggi">Giornata</button>
       <button type="button" data-view="calendario">Calendario</button>
       <button type="button" data-view="operazioni">Operazioni</button>
-      <button type="button" data-view="backtest">Backtest</button>
+      <button type="button" data-view="backtest" id="navBacktest" class="hidden">Backtest</button>
       <button type="button" data-view="trova">Trova trader</button>
       <button type="button" data-view="leaderboard">Leaderboard</button>
       <button type="button" data-view="impostazioni">Impostazioni e account</button>
@@ -1234,6 +1234,8 @@ var FEE=0.0005;
 function dirPill(d){ return '<span class="dirpill '+(d==="long"?"long":"short")+'">'+(d==="long"?"Long":"Short")+"</span>" }
 var PREFS={theme:"sistema",timezone:"Europe/Rome",dateFormat:"it",numberLocale:"it-IT"};
 var avatarUrl=null;
+/* Backtest disattivato temporaneamente: impostare a true per riattivarlo */
+var BACKTEST_ON=false;
 var THEMES={
   scuro:{bg:"#1a1e21",text:"#8592a8",grid:"rgba(128,128,128,.12)",up:"#22c55e",down:"#ef4444"},
   notte:{bg:"#0b1020",text:"#9fb0d0",grid:"rgba(120,140,200,.12)",up:"#34d399",down:"#f87171"},
@@ -2046,6 +2048,7 @@ function renderCurrent(){
   if(view==="leaderboard") loadLeaderboard();
 }
 function setView(v){
+  if(v==="backtest"&&!BACKTEST_ON) v="dashboard";
   if(v==="admin"&&!isAdmin()) v="supporto";
   if(v!=="supporto"&&v!=="admin") lastNonSupportView=v;
   view=v;
