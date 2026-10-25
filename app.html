@@ -847,6 +847,62 @@ th:last-child,td:last-child{padding-right:14px}
 .tf-photo{display:grid;gap:8px;margin-top:4px}
 .tf-hint{font-size:12px}
 .tf-photo-btn{padding:2px 10px;font-size:12px;margin-left:6px}
+
+/* ===== Passata grande: animazioni, luce, notifiche, emoji ===== */
+.view:not(.hidden)>*{animation:rise .6s cubic-bezier(.2,.7,.2,1) both}
+.view:not(.hidden)>*:nth-child(2){animation-delay:.05s}
+.view:not(.hidden)>*:nth-child(3){animation-delay:.1s}
+.view:not(.hidden)>*:nth-child(4){animation-delay:.15s}
+.view:not(.hidden)>*:nth-child(5){animation-delay:.2s}
+.panel::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:radial-gradient(280px circle at var(--px,50%) var(--py,50%),rgba(34,197,94,.11),transparent 62%);opacity:0;transition:opacity .45s ease}
+.panel:hover::after{opacity:1}
+.stat,.cal-tile{transition:transform .3s cubic-bezier(.2,.7,.2,1),box-shadow .3s ease,border-color .3s ease}
+.stat:hover,.cal-tile:hover{transform:translateY(-4px);box-shadow:0 18px 36px -20px rgba(34,197,94,.45)}
+.stat b,.cal-tile b{transition:color .3s ease}
+.btn,button.ghost{transition:transform .2s cubic-bezier(.2,.7,.2,1),box-shadow .3s ease,background .3s,color .3s,border-color .3s}
+.btn:active,button.ghost:active{transform:scale(.96)}
+.nav button{display:flex;align-items:center;gap:10px}
+.nav .em{display:inline-block;width:22px;text-align:center;font-size:17px;transition:transform .35s cubic-bezier(.2,.7,.2,1)}
+.nav button:hover .em{transform:translateY(-2px) scale(1.18) rotate(-6deg)}
+.nav button[aria-current="page"] .em{transform:scale(1.12)}
+#suMenu .ic{font-size:15px;width:22px}
+.su-menu button:hover .ic{transform:scale(1.2)}
+.su-menu .ic{transition:transform .3s ease}
+input:focus,select:focus,textarea:focus{box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 18%,transparent)}
+table tbody tr{transition:background .25s ease,transform .25s ease}
+table tbody tr:hover td{background:color-mix(in srgb,var(--accent) 8%,transparent)}
+.dirpill{transition:transform .2s ease}
+.dirpill:hover{transform:scale(1.06)}
+.day{transition:transform .25s cubic-bezier(.2,.7,.2,1),box-shadow .3s,border-color .3s}
+.day:hover{transform:translateY(-3px) scale(1.02)}
+.day.sel{animation:pick .45s cubic-bezier(.2,.7,.2,1)}
+@keyframes pick{0%{transform:scale(.94)}60%{transform:scale(1.03)}100%{transform:scale(1)}}
+.lb-tabs button,.tabs button{transition:background .3s,color .3s,transform .2s}
+.lb-tabs button:active,.tabs button:active{transform:scale(.96)}
+.cm-post{transition:background .3s,transform .3s}
+.cm-post:hover{background:color-mix(in srgb,var(--accent) 3%,transparent)}
+.cm-like{transition:transform .2s cubic-bezier(.2,.7,.2,1),color .3s,background .3s}
+.cm-like:active{transform:scale(.85)}
+.cm-like.on{animation:heart .5s cubic-bezier(.2,.7,.2,1)}
+@keyframes heart{0%{transform:scale(1)}40%{transform:scale(1.35)}100%{transform:scale(1)}}
+.gd-chip,.gd-todo li{transition:transform .25s ease,background .25s,border-color .25s}
+.gd-chip:hover{transform:translateY(-2px)}
+.gd-chip.done{animation:tick .4s ease}
+@keyframes tick{0%{transform:scale(.97)}100%{transform:scale(1)}}
+.toast-box{position:fixed;right:20px;bottom:20px;display:grid;gap:10px;z-index:900;max-width:min(360px,calc(100vw - 40px))}
+.toast{opacity:0;transform:translateY(18px) scale(.98);transition:opacity .4s ease,transform .5s cubic-bezier(.2,.7,.2,1);padding:13px 16px 13px 44px;border-radius:16px;background:color-mix(in srgb,var(--panel) 94%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--line);box-shadow:var(--shadow-md);font-size:14px;position:relative}
+.toast::before{content:"✨";position:absolute;left:14px;top:12px;font-size:17px}
+.toast.err::before{content:"⚠️"}
+.toast.ok::before{content:"✅"}
+.toast.err{border-color:color-mix(in srgb,var(--loss) 50%,transparent)}
+.toast.ok{border-color:color-mix(in srgb,var(--gain) 50%,transparent)}
+.toast.in{opacity:1;transform:none}
+.emoji-empty{display:block;font-size:34px;margin-bottom:6px;animation:bob 3s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.big{transition:color .4s ease}
+@media (prefers-reduced-motion:reduce){
+  .view:not(.hidden)>*,.toast,.nav .em,.emoji-empty,.cm-like.on,.day.sel,.gd-chip.done{animation:none!important;transition:none!important}
+}
 </style>
 </head>
 <body>
@@ -3580,6 +3636,46 @@ $("cmList").addEventListener("click",async function(e){
   }
 });
 
+/* ---- Passata grande: emoji, notifiche, luce sui pannelli ---- */
+(function(){
+  var NAV={dashboard:"📊",oggi:"🗓️",calendario:"📅",operazioni:"🧾",community:"💬",backtest:"🎯",trova:"🔎",leaderboard:"🏆",impostazioni:"⚙️",supporto:"💌",privacy:"🛡️"};
+  document.querySelectorAll(".nav button[data-view]").forEach(function(b){
+    var k=b.getAttribute("data-view"),e=document.createElement("span");
+    e.className="em";e.setAttribute("aria-hidden","true");e.textContent=NAV[k]||"•";
+    b.insertBefore(e,b.firstChild);
+  });
+  var MENU={profile:"👤",edit:"✏️",settings:"⚙️",privacy:"🛡️",broker:"🔌",export:"📦",support:"💌",admin:"📬",logout:"👋"};
+  document.querySelectorAll("#suMenu [data-act]").forEach(function(b){
+    var ic=b.querySelector(".ic"),k=b.getAttribute("data-act");
+    if(ic&&MENU[k]) ic.textContent=MENU[k];
+  });
+
+  var box=document.createElement("div");box.className="toast-box";box.setAttribute("role","status");
+  document.body.appendChild(box);
+  function toast(msg,kind){
+    var t=document.createElement("div");t.className="toast "+(kind||"ok");t.textContent=msg;
+    box.appendChild(t);
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){ t.classList.add("in") }) });
+    setTimeout(function(){ t.classList.remove("in"); setTimeout(function(){ t.remove() },500) },4200);
+  }
+  window.alert=function(m){
+    var t=String(m);
+    toast(t,/non |errore|impossibil|supera|scrivi|usa |controlla|saldo|vietat|obbligatori|almeno|massimo/i.test(t)?"err":"ok");
+  };
+
+  document.addEventListener("mousemove",function(e){
+    var p=e.target.closest&&e.target.closest(".panel");
+    if(!p) return;
+    var r=p.getBoundingClientRect();
+    p.style.setProperty("--px",(e.clientX-r.left)+"px");
+    p.style.setProperty("--py",(e.clientY-r.top)+"px");
+  },{passive:true});
+
+  document.querySelectorAll(".nav button[data-view]").forEach(function(b){
+    b.addEventListener("mouseenter",function(){ var e=b.querySelector(".em"); if(e){ e.style.transform="translateY(-2px) scale(1.18)" } });
+    b.addEventListener("mouseleave",function(){ var e=b.querySelector(".em"); if(e) e.style.transform="" });
+  });
+})();
 /* Avvio */
 if(!ready){
   $("auth").innerHTML='<div class="panel authbox"><h1>Configurazione mancante</h1><p class="sub">Inserisci URL e chiave Supabase in config.js.</p></div>';
