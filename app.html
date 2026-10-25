@@ -111,6 +111,25 @@ td.note{white-space:normal;color:var(--mute);max-width:200px}
 .rank-head{display:flex;gap:14px;align-items:center}
 .rank-card .big{margin-top:0}
 .rank-meta{font-size:13px;color:var(--mute);margin:10px 0 0}
+.lb-tabs{display:inline-flex;gap:4px;background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:4px}
+.lb-tabs button{background:transparent;border:0;padding:7px 14px;border-radius:999px;color:var(--mute);font-size:13px}
+.lb-tabs button.on{background:var(--accent);color:var(--accent-ink)}
+.lb-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:18px}
+.lb-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-md);padding:16px}
+.lb-card span{font-size:12px;color:var(--mute);display:block}
+.lb-card b{font:700 22px var(--font-title);display:block;margin-top:4px}
+.lb-card small{font-size:12px;color:var(--mute)}
+.lb-av{width:34px;height:34px;border-radius:50%;display:inline-grid;place-items:center;font-weight:700;color:#1a1d21;margin-right:10px;vertical-align:middle}
+.lb-pos{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;font-weight:700;background:var(--bg);border:1px solid var(--line)}
+.lb-top1 .lb-pos{background:#e0b84a;border-color:#e0b84a;color:#1a1d21}
+.lb-top2 .lb-pos{background:#c0c7d1;border-color:#c0c7d1;color:#1a1d21}
+.lb-top3 .lb-pos{background:#b87333;border-color:#b87333;color:#fff}
+.lb-self td{background:color-mix(in srgb,var(--accent) 10%,transparent)}
+.lb-badge{font-size:11px;padding:3px 9px;border-radius:999px;border:1px solid var(--line);color:var(--mute)}
+.lb-rank{display:inline-flex;align-items:center;gap:8px}
+.lb-rank svg{width:20px;height:24px}
+.lb-msg{padding:28px 8px;text-align:center;color:var(--mute)}
+.lb-search{max-width:280px}
 input[type=range]{padding:0;border:0;background:transparent;accent-color:var(--gain);width:100%}
 .bt-setup-grid{display:grid;grid-template-columns:1fr 1.2fr;gap:18px;align-items:start}
 .cap-wrap{position:relative;margin:26px 0 22px}
@@ -195,6 +214,7 @@ table th{font-weight:600}
       <button type="button" data-view="calendario">Calendario</button>
       <button type="button" data-view="operazioni">Operazioni</button>
       <button type="button" data-view="backtest">Backtest</button>
+      <button type="button" data-view="leaderboard">Leaderboard</button>
       <button type="button" data-view="impostazioni">Impostazioni e account</button>
     </nav>
   </aside>
@@ -357,6 +377,31 @@ table th{font-weight:600}
       </div>
     </section>
 
+    <section id="v-leaderboard" class="view hidden">
+      <h1>Leaderboard</h1>
+      <p class="sub">Compete. Improve. Dominate.</p>
+      <div class="bar">
+        <div class="lb-tabs" id="lbPeriod">
+          <button type="button" data-lbp="week" class="on">Settimana</button>
+          <button type="button" data-lbp="month">Mese</button>
+        </div>
+        <div class="lb-tabs" id="lbMetric">
+          <button type="button" data-lbm="rating" class="on">Rating</button>
+          <button type="button" data-lbm="return">Rendimento</button>
+          <button type="button" data-lbm="winrate">Win rate</button>
+          <button type="button" data-lbm="streak">Serie positiva</button>
+        </div>
+      </div>
+      <div class="lb-cards" id="lbCards"></div>
+      <section class="panel">
+        <div class="bar">
+          <h2 style="margin:0">Classifica</h2>
+          <input class="lb-search" id="lbSearch" placeholder="Cerca per nome utente" autocomplete="off">
+        </div>
+        <p class="rank-meta" style="margin:0 0 12px">Risultati autodichiarati: i trade sono inseriti manualmente dai trader e non sono ancora verificati da un broker. Il Rating è calcolato su tutta la storia del trader; rendimento, win rate e serie valgono per il periodo selezionato. Per il Win rate servono almeno 10 trade validi, per le altre classifiche almeno 5.</p>
+        <div class="tablewrap" id="lbBody"></div>
+      </section>
+    </section>
     <section id="v-impostazioni" class="view hidden">
       <h1>Impostazioni e account</h1>
       <p class="sub">Gestisci il tuo account e i tuoi dati.</p>
@@ -370,6 +415,7 @@ table th{font-weight:600}
         <form id="profForm" autocomplete="off">
           <label>Nome utente (3-20 caratteri: lettere minuscole, numeri, _)<input id="profUser" maxlength="20" required></label>
           <label>Capitale iniziale del conto (USD)<input type="number" id="profCap" min="1" step="100" required></label>
+          <label style="display:flex;gap:10px;align-items:center;font-size:14px;color:var(--ink)"><input type="checkbox" id="profInLb" style="width:auto"> Mostra il mio profilo nella Leaderboard (solo nome utente e statistiche aggregate)</label>
           <div class="msg" id="profMsg" role="alert"></div>
           <div><button class="btn" type="submit" id="profBtn">Salva profilo</button></div>
         </form>
@@ -407,6 +453,7 @@ var sb=ready?supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY):null;
 /* Stato generale */
 var trades=[],btTrades=[],backtests=[],user=null,view="dashboard",calMonth=new Date(),calSel=null,authMode="login",btErr=false;
 var profile=null,rankData=null;
+var lb={period:"week",metric:"rating",rows:[],state:"idle",error:""};
 var BIN="https://api.binance.com/api/v3/klines";
 var TDTF={"1m":"1min","5m":"5min","15m":"15min","1h":"1h","4h":"4h","1d":"1day"};
 var TFL={"1m":"1m","5m":"5m","15m":"15m","1h":"1h","4h":"4h","1d":"1D"};
@@ -1024,7 +1071,7 @@ async function saveProfile(e){
   if(!/^[a-z0-9_]{3,20}$/.test(u)){$("profMsg").textContent="Il nome utente deve avere 3-20 caratteri: lettere minuscole, numeri o _.";return}
   if(!(cap>0)){$("profMsg").textContent="Inserisci un capitale iniziale valido.";return}
   $("profBtn").disabled=true;
-  var r=await sb.from("profiles").upsert({user_id:user.id,username:u,starting_capital:cap},{onConflict:"user_id"}).select().single();
+  var r=await sb.from("profiles").upsert({user_id:user.id,username:u,starting_capital:cap,in_leaderboard:$("profInLb").checked},{onConflict:"user_id"}).select().single();
   $("profBtn").disabled=false;
   if(r.error){$("profMsg").textContent=r.error.code==="23505"?"Nome utente già usato, scegline un altro.":"Salvataggio non riuscito: "+r.error.message;return}
   profile=r.data;
@@ -1032,11 +1079,64 @@ async function saveProfile(e){
   refreshRank();
 }
 
+/* Leaderboard */
+function lbInitials(n){return (n||"?").charAt(0).toUpperCase()}
+function renderLbCards(){
+  var rows=lb.rows;
+  function best(key){ return rows.reduce(function(a,r){return (a===null||r[key]>a[key])?r:a},null) }
+  var items=[
+    ["Miglior rating",best("points"),function(r){return r.points+" punti"}],
+    ["Miglior rendimento",best("return_pct"),function(r){return sgn(r.return_pct)+"%"}],
+    ["Miglior win rate",best("win_rate"),function(r){return fmt(r.win_rate,1)+"%"}],
+    ["Serie positiva più lunga",best("best_streak"),function(r){return r.best_streak+" giorni"}]
+  ];
+  $("lbCards").innerHTML=items.map(function(i){
+    var r=i[1];
+    return '<div class="lb-card"><span>'+i[0]+'</span><b>'+(r?i[2](r):"—")+'</b><small>'+(r?esc(r.username):"Nessun dato")+'</small></div>';
+  }).join("");
+}
+function renderLeaderboard(){
+  document.querySelectorAll("#lbPeriod [data-lbp]").forEach(function(b){b.classList.toggle("on",b.getAttribute("data-lbp")===lb.period)});
+  document.querySelectorAll("#lbMetric [data-lbm]").forEach(function(b){b.classList.toggle("on",b.getAttribute("data-lbm")===lb.metric)});
+  if(lb.state==="loading"){ $("lbBody").innerHTML='<div class="lb-msg">Carico la classifica…</div>'; return }
+  if(lb.state==="error"){ $("lbBody").innerHTML='<div class="lb-msg" style="color:var(--loss)">Classifica non disponibile: '+esc(lb.error)+'</div>'; return }
+  renderLbCards();
+  if(!lb.rows.length){
+    $("lbBody").innerHTML='<div class="lb-msg">Nessun trader in classifica per questo periodo.<br>Attiva "Mostra il mio profilo nella Leaderboard" in Impostazioni e registra almeno 5 trade validi.</div>';
+    return;
+  }
+  var q=$("lbSearch").value.trim().toLowerCase();
+  var rows=lb.rows.map(function(r,i){return {r:r,pos:i+1}}).filter(function(x){return !q||x.r.username.toLowerCase().indexOf(q)>-1});
+  if(!rows.length){ $("lbBody").innerHTML='<div class="lb-msg">Nessun trader trovato con questo nome.</div>'; return }
+  var body=rows.map(function(x){
+    var r=x.r,cls2=(x.pos<=3?" lb-top"+x.pos:"")+(r.is_self?" lb-self":"");
+    var col=r.rank_color||"#b87333";
+    return '<tr class="'+cls2+'"><td><span class="lb-pos">'+x.pos+'</span></td>'+
+      '<td><span class="lb-av" style="background:'+esc(col)+'">'+esc(lbInitials(r.username))+'</span><b>'+esc(r.username)+'</b>'+(r.is_self?' <span class="lb-badge">Tu</span>':'')+'</td>'+
+      '<td><span class="lb-rank">'+rankEmblem(col,r.rank_name)+esc(r.rank_name)+'</span></td>'+
+      '<td class="n"><b>'+r.points+'</b></td>'+
+      '<td class="n '+cls(r.return_pct)+'">'+sgn(r.return_pct)+'%</td>'+
+      '<td class="n">'+fmt(r.win_rate,1)+'%</td>'+
+      '<td class="n">'+r.best_streak+'</td>'+
+      '<td class="n">'+r.trades+'</td>'+
+      '<td><span class="lb-badge" title="Risultati inseriti manualmente, non verificati">Autodichiarato</span></td></tr>';
+  }).join("");
+  $("lbBody").innerHTML='<table><thead><tr><th>#</th><th>Trader</th><th>Rank</th><th class="n">Rating</th><th class="n">Rendimento</th><th class="n">Win rate</th><th class="n">Serie</th><th class="n">Trade</th><th>Verifica</th></tr></thead><tbody>'+body+'</tbody></table>';
+}
+async function loadLeaderboard(){
+  lb.state="loading"; renderLeaderboard();
+  var r=await sb.rpc("leaderboard",{p_period:lb.period,p_metric:lb.metric,p_min_trades:lb.metric==="winrate"?10:5});
+  if(r.error){ lb.state="error"; lb.error=r.error.message; lb.rows=[]; }
+  else { lb.state="ok"; lb.rows=r.data||[]; }
+  renderLeaderboard();
+}
+
 /* Render generale */
 function renderImpostazioni(){
   $("acctEmail").textContent=user?user.email:"";
   $("profUser").value=profile?profile.username||"":"";
   $("profCap").value=profile?profile.starting_capital:10000;
+  $("profInLb").checked=profile?!!profile.in_leaderboard:false;
 }
 function renderCurrent(){
   if(view==="dashboard") renderDashboard();
@@ -1045,6 +1145,7 @@ function renderCurrent(){
   if(view==="operazioni") renderOperazioni();
   if(view==="backtest") renderBacktest();
   if(view==="impostazioni") renderImpostazioni();
+  if(view==="leaderboard") loadLeaderboard();
 }
 function setView(v){
   view=v;
@@ -1223,6 +1324,15 @@ document.addEventListener("keydown",function(e){
   else if(k==="s") bSubmit("short");
   else if(k==="c"&&bPos){bClose(bAll[bCur].c,"Manuale");drawBt();updateBt()}
 });
+
+/* Leaderboard: controlli */
+document.querySelectorAll("#lbPeriod [data-lbp]").forEach(function(b){
+  b.addEventListener("click",function(){lb.period=b.getAttribute("data-lbp");loadLeaderboard()});
+});
+document.querySelectorAll("#lbMetric [data-lbm]").forEach(function(b){
+  b.addEventListener("click",function(){lb.metric=b.getAttribute("data-lbm");loadLeaderboard()});
+});
+$("lbSearch").addEventListener("input",renderLeaderboard);
 
 /* Impostazioni */
 $("profForm").addEventListener("submit",saveProfile);
