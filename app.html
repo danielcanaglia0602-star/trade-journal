@@ -2267,7 +2267,9 @@ function rankEmblem(color,name){
     '<path d="M24 2 L44 10 V28 C44 40 36 49 24 54 C12 49 4 40 4 28 V10 Z" fill="'+esc(color)+'" stroke="var(--ink)" stroke-width="1.5"/>'+
     '<text x="24" y="34" text-anchor="middle" font-size="18" font-weight="700" fill="#1a1d21">'+esc(letter)+'</text></svg>';
 }
+var rankErr="";
 function rankCardHTML(){
+  if(!rankData&&rankErr) return '<section class="panel rank-card"><span class="lab">Rank</span><div class="big">—</div><p class="rank-meta" style="color:var(--loss)">Rank non disponibile: '+esc(rankErr)+'</p><p class="rank-meta"><button class="ghost" type="button" onclick="refreshRank()">Riprova</button></p></section>';
   if(!rankData) return '<section class="panel rank-card"><span class="lab">Rank</span><div class="big">—</div><p class="rank-meta">Caricamento del rank…</p></section>';
   var r=rankData,base=r.rank_min,span=(r.next_points||base)-base;
   var prog=r.next_rank&&span>0?Math.min(100,Math.max(0,(r.points-base)/span*100)):100;
@@ -2289,6 +2291,7 @@ async function loadProfile(){
 async function refreshRank(){
   if(!user) return;
   var r=await sb.rpc("my_rank");
+  rankErr=r.error?r.error.message:"";
   rankData=r.error?null:r.data;
   if(view==="dashboard") renderDashboard();
 }
