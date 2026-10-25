@@ -318,6 +318,50 @@ body.bt-focus main{padding:0!important;max-width:none!important;height:100vh;ove
 .tv-fly button.on .sc{color:var(--accent-ink)}
 .ico{flex:none}
 .hidden{display:none!important}
+
+.side{display:flex;flex-direction:column}
+.side .nav{flex:0 0 auto}
+.side-user{margin-top:auto;position:relative;border-top:1px solid var(--line);padding-top:12px}
+.su-btn{display:flex;align-items:center;gap:12px;width:100%;padding:10px;border-radius:16px;background:transparent;border:1px solid transparent;text-align:left;color:var(--ink)}
+.su-btn:hover{background:var(--bg);border-color:var(--line)}
+.su-av{width:40px;height:40px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:var(--accent);color:var(--accent-ink);font-weight:700;flex:none;box-shadow:0 4px 12px -6px rgba(0,0,0,.4)}
+.su-av img{width:100%;height:100%;object-fit:cover}
+.su-txt{min-width:0;flex:1}
+.su-txt b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:700}
+.su-txt small{color:var(--mute);font-size:12px}
+.su-dots{color:var(--mute);font-size:14px}
+.su-menu{position:absolute;left:0;right:0;bottom:calc(100% + 8px);background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:0 18px 40px -14px rgba(0,0,0,.35);padding:6px;max-height:min(70vh,460px);overflow:auto;z-index:60}
+.su-menu button{display:flex;align-items:center;gap:10px;width:100%;padding:9px 10px;background:transparent;border:0;border-radius:10px;color:var(--ink);text-align:left;font-size:14px}
+.su-menu button:hover{background:var(--bg)}
+.su-menu button.danger{color:var(--loss)}
+.su-menu hr{border:0;border-top:1px solid var(--line);margin:6px 4px}
+.su-menu .ic{width:18px;text-align:center;color:var(--mute)}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
+.kv span{color:var(--mute)}
+.danger-btn{color:var(--loss);border-color:var(--loss)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:grid;place-items:center;padding:16px;z-index:500}
+.modal-card{background:var(--panel);border:1px solid var(--line);border-radius:20px;max-width:780px;width:100%;max-height:92vh;overflow:auto;padding:22px;box-shadow:0 24px 60px -20px rgba(0,0,0,.5)}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.modal-head h2{margin:0}
+.pm-grid{display:grid;grid-template-columns:200px minmax(0,1fr);gap:22px}
+@media (max-width:700px){.pm-grid{grid-template-columns:1fr}}
+.pm-preview{width:132px;height:132px;border-radius:50%;overflow:hidden;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font:700 44px var(--font-title);margin:0 auto;box-shadow:0 10px 24px -12px rgba(0,0,0,.4)}
+.pm-preview img{width:100%;height:100%;object-fit:cover}
+.pm-photo-btns{display:flex;gap:8px;justify-content:center;margin:12px 0 6px;flex-wrap:wrap}
+.pm-file{cursor:pointer;display:inline-block;border-radius:999px;padding:6px 14px;border:1px solid var(--line)}
+.pm-bio-preview{font-size:13px;color:var(--mute);margin-top:6px;white-space:pre-wrap;word-break:break-word}
+.count{float:right;font-size:12px}
+.chk-set{border:1px solid var(--line);border-radius:14px;padding:10px 12px;display:flex;gap:12px;flex-wrap:wrap}
+.chk-set label{display:flex;gap:6px;align-items:center;font-size:14px;color:var(--ink)}
+.chk-set legend{font-size:13px;color:var(--mute);padding:0 4px}
+.pm-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:10px}
+@media (max-width:860px){
+  .su-txt,.su-dots{display:none}
+  .side-user{margin-top:0;padding-top:0;border-top:0}
+  .su-menu{left:auto;right:0;width:260px}
+}
+:root[data-theme="light"]{--bg:#f4f1ea;--side:#ebe7dd;--panel:#fbfaf6;--ink:#1a1d21;--mute:#5c6168;--line:#d9d4c7;--gain:#1d7a4f;--loss:#b03a3a;--accent:#1f4d3a;--accent-ink:#f4f1ea;color-scheme:light}
+:root[data-theme="dark"]{--bg:#121416;--side:#0d0f11;--panel:#1a1e21;--ink:#ecebe6;--mute:#9a9da2;--line:#2b2f33;--gain:#7fd1ae;--loss:#ff8a8a;--accent:#7fd1ae;--accent-ink:#121416;color-scheme:dark}
 </style>
 </head>
 <body>
@@ -351,6 +395,24 @@ body.bt-focus main{padding:0!important;max-width:none!important;height:100vh;ove
       <button type="button" data-view="leaderboard">Leaderboard</button>
       <button type="button" data-view="impostazioni">Impostazioni e account</button>
     </nav>
+    <div class="side-user" id="sideUser">
+      <div class="su-menu hidden" id="suMenu" role="menu" aria-label="Menu profilo">
+        <button type="button" role="menuitem" data-act="profile"><span class="ic">◎</span>Il mio profilo</button>
+        <button type="button" role="menuitem" data-act="edit"><span class="ic">✎</span>Modifica profilo</button>
+        <hr>
+        <button type="button" role="menuitem" data-act="settings"><span class="ic">⚙</span>Impostazioni</button>
+        <button type="button" role="menuitem" data-act="privacy"><span class="ic">◉</span>Privacy e sicurezza</button>
+        <button type="button" role="menuitem" data-act="broker"><span class="ic">⇄</span>Connessioni broker</button>
+        <button type="button" role="menuitem" data-act="export"><span class="ic">⇩</span>Esporta i miei dati</button>
+        <hr>
+        <button type="button" role="menuitem" class="danger" data-act="logout"><span class="ic">⏻</span>Esci</button>
+      </div>
+      <button type="button" class="su-btn" id="suBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="suMenu">
+        <span class="su-av" id="suAv" aria-hidden="true"></span>
+        <span class="su-txt"><b id="suName">Trader</b><small>Trader</small></span>
+        <span class="su-dots" aria-hidden="true">⌃</span>
+      </button>
+    </div>
   </aside>
 
   <main id="main">
@@ -560,6 +622,89 @@ body.bt-focus main{padding:0!important;max-width:none!important;height:100vh;ove
         <div class="tablewrap" id="lbBody"></div>
       </section>
     </section>
+    <section id="v-privacy" class="view hidden">
+      <h1>Privacy e sicurezza</h1>
+      <p class="sub">Controlla la sicurezza del tuo account, la visibilità dei tuoi dati e le tue richieste.</p>
+      <section class="panel">
+        <h2>Informazioni account</h2>
+        <div class="kv"><span>Email</span><b id="secEmail">—</b></div>
+        <div class="kv"><span>Account creato il</span><b id="secCreated">—</b></div>
+        <div class="kv"><span>Ultimo accesso</span><b id="secLast">—</b></div>
+        <div class="kv"><span>Email verificata</span><b id="secVerified">—</b></div>
+      </section>
+      <section class="panel">
+        <h2>Visibilità</h2>
+        <div class="kv"><span>Profilo pubblico</span><b id="secPublic">—</b></div>
+        <div class="kv"><span>Classifica</span><b id="secLb">—</b></div>
+        <p class="muted" style="margin:12px 0">Le impostazioni di visibilità di biografia, statistiche, operazioni e mercati si modificano in Impostazioni e account, nella sezione Profilo trader.</p>
+        <button class="ghost" type="button" id="privGoSettings">Vai a Profilo trader</button>
+      </section>
+            <section class="panel">
+        <h2>Preferenze</h2>
+        <form id="prefForm" autocomplete="off">
+          <div class="row">
+            <label>Tema
+              <select id="prefTheme"><option value="sistema">Come il sistema</option><option value="scuro">Scuro</option><option value="chiaro">Chiaro</option></select>
+            </label>
+            <label>Fuso orario (grafico backtest)
+              <select id="prefTz">
+                <option value="Europe/Rome">Europa centrale (Roma)</option><option value="Europe/London">Londra</option>
+                <option value="America/New_York">New York</option><option value="Asia/Tokyo">Tokyo</option><option value="UTC">UTC</option>
+              </select>
+            </label>
+          </div>
+          <div class="row">
+            <label>Formato data
+              <select id="prefDate"><option value="it">gg/mm/aaaa</option><option value="iso">aaaa-mm-gg</option></select>
+            </label>
+            <label>Formato numeri
+              <select id="prefNum"><option value="it-IT">1.234,56</option><option value="en-US">1,234.56</option></select>
+            </label>
+          </div>
+          <div class="msg" id="prefMsg" role="alert"></div>
+          <div><button class="btn" type="submit">Salva preferenze</button></div>
+        </form>
+        <p class="muted" style="margin-top:14px">Lingua: italiano (unica lingua disponibile). Notifiche: non ancora disponibili.</p>
+      </section>
+<section class="panel">
+        <h2>Cambia password</h2>
+        <form id="privPwForm" autocomplete="off">
+          <label>Nuova password (minimo 8 caratteri)<input type="password" id="pwNew1" minlength="8" required autocomplete="new-password"></label>
+          <label>Ripeti la nuova password<input type="password" id="pwNew2" minlength="8" required autocomplete="new-password"></label>
+          <div class="msg" id="pwMsg2" role="alert"></div>
+          <div><button class="btn" type="submit">Aggiorna password</button></div>
+        </form>
+      </section>
+      <section class="panel">
+        <h2>Sessioni</h2>
+        <p class="muted" style="margin-bottom:12px">Puoi uscire da tutti i dispositivi. Non è possibile vedere l'elenco dei dispositivi collegati.</p>
+        <button class="ghost" type="button" id="privLogoutAll">Esci da tutti i dispositivi</button>
+      </section>
+      <section class="panel">
+        <h2>I tuoi dati</h2>
+        <p class="muted" style="margin-bottom:12px">Scarica una copia completa di profilo, operazioni e sessioni di backtest in formato JSON.</p>
+        <button class="ghost" type="button" id="privExportBtn">Esporta i miei dati</button>
+      </section>
+      <section class="panel" style="border-color:var(--loss)">
+        <h2>Eliminazione account</h2>
+        <p class="muted" style="margin-bottom:12px">Richiedi l'eliminazione del tuo account e dei tuoi dati personali. La richiesta viene registrata e gestita dal team: non è una cancellazione immediata. Alcuni dati possono essere conservati se la legge lo richiede.</p>
+        <label>Per confermare, scrivi ELIMINA<input id="privDelInput" autocomplete="off"></label>
+        <div class="msg" id="privDelMsg" role="alert" style="margin:10px 0"></div>
+        <button class="ghost danger-btn" type="button" id="privDelBtn" disabled>Richiedi eliminazione account</button>
+      </section>
+    </section>
+
+    <section id="v-broker" class="view hidden">
+      <h1>Connessioni broker</h1>
+      <p class="sub">Collega il tuo broker per importare le operazioni.</p>
+      <section class="panel">
+        <h2>Stato</h2>
+        <p>Nessun broker collegato.</p>
+        <p class="muted" style="margin-top:10px">I collegamenti diretti richiedono un'integrazione ufficiale del broker, con accesso in sola lettura tramite OAuth. Questa integrazione non è ancora disponibile. Nel frattempo puoi inserire le operazioni manualmente in Operazioni, oppure esportare i tuoi dati.</p>
+        <div style="margin-top:14px"><button class="ghost" type="button" data-go="operazioni">Vai a Operazioni</button></div>
+      </section>
+    </section>
+
     <section id="v-impostazioni" class="view hidden">
       <h1>Impostazioni e account</h1>
       <p class="sub">Gestisci il tuo account e i tuoi dati.</p>
@@ -619,6 +764,45 @@ body.bt-focus main{padding:0!important;max-width:none!important;height:100vh;ove
   </main>
 </div>
 
+<div id="profModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="pmTitle">
+  <div class="modal-card">
+    <div class="modal-head"><h2 id="pmTitle">Modifica profilo</h2><button class="ghost" type="button" id="pmClose" aria-label="Chiudi">✕</button></div>
+    <form id="pmForm" autocomplete="off" class="pm-grid">
+      <div>
+        <div class="pm-preview" id="pmPreview" aria-hidden="true"></div>
+        <div class="pm-photo-btns">
+          <label class="ghost pm-file">Carica foto<input type="file" id="pmFile" accept="image/jpeg,image/png,image/webp" hidden></label>
+          <button class="ghost" type="button" id="pmRemovePhoto">Rimuovi</button>
+        </div>
+        <p class="muted" style="font-size:12px;text-align:center">JPG, PNG o WebP, massimo 2 MB. Viene ritagliata in quadrato.</p>
+        <p class="muted" style="font-size:12px;text-align:center;margin-top:12px">Registrato il <span id="pmJoined">—</span></p>
+      </div>
+      <div>
+        <label>Nome visualizzato<input id="pmName" maxlength="40" placeholder="Come vuoi essere chiamato"></label>
+        <label style="margin-top:10px">Nome utente<input id="pmUser" maxlength="20" required></label>
+        <label style="margin-top:10px"><span>Biografia <span class="count" id="pmBioCount">250</span></span>
+          <textarea id="pmBio" maxlength="250" rows="3"></textarea></label>
+        <div class="pm-bio-preview" id="pmBioPrev"></div>
+        <label style="margin-top:10px">Paese o area<input id="pmLoc" maxlength="60"></label>
+        <fieldset class="chk-set" style="margin-top:10px">
+          <legend>Mercati trattati</legend>
+          <label><input type="checkbox" data-mkt="Forex"> Forex</label>
+          <label><input type="checkbox" data-mkt="Futures"> Futures</label>
+          <label><input type="checkbox" data-mkt="Azioni"> Azioni</label>
+          <label><input type="checkbox" data-mkt="Indici"> Indici</label>
+          <label><input type="checkbox" data-mkt="Crypto"> Crypto</label>
+        </fieldset>
+        <label style="margin-top:10px">Stile di trading<input id="pmStyle" maxlength="60" placeholder="es. swing, scalping"></label>
+        <label style="margin-top:10px">Sito personale<input id="pmWeb" type="url" maxlength="200" placeholder="https://..."></label>
+        <div class="msg" id="pmMsg" role="alert" style="margin-top:10px"></div>
+        <div class="pm-actions">
+          <button class="ghost" type="button" id="pmCancel">Annulla</button>
+          <button class="btn" type="submit" id="pmSave">Salva modifiche</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
 <script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
@@ -639,6 +823,8 @@ var TDTF={"1m":"1min","5m":"5min","15m":"15min","1h":"1h","4h":"4h","1d":"1day"}
 var TFL={"1m":"1m","5m":"5m","15m":"15m","1h":"1h","4h":"4h","1d":"1D"};
 var TFS={"1m":60,"5m":300,"15m":900,"1h":3600,"4h":14400,"1d":86400};
 var FEE=0.0005;
+var PREFS={theme:"sistema",timezone:"Europe/Rome",dateFormat:"it",numberLocale:"it-IT"};
+var avatarUrl=null;
 var THEMES={
   scuro:{bg:"#1a1e21",text:"#8592a8",grid:"rgba(128,128,128,.12)",up:"#2bb08a",down:"#ef5a5a"},
   notte:{bg:"#0b1020",text:"#9fb0d0",grid:"rgba(120,140,200,.12)",up:"#3dd68c",down:"#ff6b6b"},
@@ -656,8 +842,8 @@ function ymd(d){return d.getFullYear()+"-"+p2(d.getMonth()+1)+"-"+p2(d.getDate()
 function parse(s){var a=s.split("-");return new Date(+a[0],+a[1]-1,+a[2])}
 function addDays(s,n){var d=parse(s);d.setDate(d.getDate()+n);return ymd(d)}
 function today(){return ymd(new Date())}
-function dmy(s){return s.split("-").reverse().join("/")}
-function fmt(n,d){d=d==null?2:d;return n.toLocaleString("it-IT",{minimumFractionDigits:d,maximumFractionDigits:d})}
+function dmy(s){ if(!s) return ""; return PREFS.dateFormat==="iso"?s:s.split("-").reverse().join("/") }
+function fmt(n,d){d=d==null?2:d;return n.toLocaleString(PREFS.numberLocale||"it-IT",{minimumFractionDigits:d,maximumFractionDigits:d})}
 function sgn(n){return (n>0?"+":"")+fmt(n)}
 function cls(n){return n>0?"pos":n<0?"neg":""}
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
@@ -754,7 +940,7 @@ function renderDashboard(){
   var now=new Date(),y=now.getFullYear(),m=now.getMonth();
   var monthList=inRange(trades,ymd(new Date(y,m,1)),ymd(new Date(y,m+1,0)));
   var ms=stats(monthList),dm=daily(monthList);
-  var name=(user&&user.email)?user.email.split("@")[0]:"trader";
+  var name=displayName();
   var have={};trades.forEach(function(t){have[t.trade_date]=true});
   var streak=0,d=to;while(have[d]){streak++;d=addDays(d,-1)}
   var keys=Object.keys(have).sort(),record=0,run=0,prev=null;
@@ -1187,7 +1373,7 @@ function updateBt(){
   $("btPlay").disabled=!bLoaded;$("btStep").disabled=!bLoaded;$("btStep5").disabled=!bLoaded;$("btStep20").disabled=!bLoaded;
   $("btPlay").textContent=bTimer?"❚❚":"▶";
   $("btPrice").disabled=$("btType").value==="market";
-  if(bLoaded) $("btWhen").textContent=bSym+" "+TFL[bTf]+" · "+new Date(bAll[bCur].t*1000).toLocaleString("it-IT",{timeZone:"UTC"})+" UTC · candela "+(bCur+1)+"/"+bAll.length;
+  if(bLoaded) $("btWhen").textContent=bSym+" "+TFL[bTf]+" · "+new Date(bAll[bCur].t*1000).toLocaleString("it-IT",{timeZone:PREFS.timezone||"UTC"})+" "+(PREFS.timezone||"UTC")+" · candela "+(bCur+1)+"/"+bAll.length;
   renderBtTabs();
 }
 
@@ -1428,7 +1614,7 @@ async function loadLeaderboard(){
 }
 
 /* Render generale */
-function renderImpostazioni(){
+function renderImpostazioni(){ fillPrefs();
   $("acctEmail").textContent=user?user.email:"";
   $("profUser").value=profile?profile.username||"":"";
   $("profCap").value=profile?profile.starting_capital:10000;
@@ -1445,6 +1631,7 @@ function renderCurrent(){
   if(view==="operazioni") renderOperazioni();
   if(view==="backtest") renderBacktest();
   if(view==="impostazioni") renderImpostazioni();
+  if(view==="privacy") renderPrivacy();
   if(view==="leaderboard") loadLeaderboard();
 }
 function setView(v){
@@ -1468,6 +1655,8 @@ async function loadAll(){
     await sb.from("profiles").upsert({user_id:user.id,username:user.user_metadata.username,starting_capital:10000},{onConflict:"user_id"});
     await loadProfile();
   }
+  loadPrefs();applyPrefs();
+  await refreshAvatar();
   await refreshRank();
   renderCurrent();
 }
@@ -1479,7 +1668,7 @@ function enterApp(u){
   loadAll();
 }
 function enterAuth(){
-  user=null;trades=[];btTrades=[];backtests=[];
+  user=null;trades=[];btTrades=[];backtests=[];avatarUrl=null;profile=null;
   $("shell").classList.add("hidden");$("auth").classList.remove("hidden");
 }
 
@@ -1968,6 +2157,233 @@ $("exportBtn").addEventListener("click",function(){
 });
 
 if(sb){ sb.auth.onAuthStateChange(function(ev){ if(ev==="PASSWORD_RECOVERY") recoveryPending=true; }); }
+
+/* Profilo nella sidebar */
+function displayName(){
+  return (profile&&profile.display_name)||(profile&&profile.username)||((user&&user.email)?user.email.split("@")[0]:"Trader");
+}
+function renderSideUser(){
+  var n=displayName();
+  $("suName").textContent=n;
+  $("suAv").innerHTML=avatarUrl?'<img src="'+esc(avatarUrl)+'" alt="">':esc((n.trim().charAt(0)||"?").toUpperCase());
+}
+async function refreshAvatar(){
+  avatarUrl=null;
+  if(profile&&profile.avatar_path&&sb){
+    var r=await sb.storage.from("avatars").createSignedUrl(profile.avatar_path,3600);
+    avatarUrl=r.data?r.data.signedUrl:null;
+  }
+  renderSideUser();
+}
+function toggleSideMenu(force){
+  var m=$("suMenu"),open=(force!==undefined)?force:m.classList.contains("hidden");
+  m.classList.toggle("hidden",!open);
+  $("suBtn").setAttribute("aria-expanded",open?"true":"false");
+}
+$("suBtn").addEventListener("click",function(e){ e.stopPropagation(); toggleSideMenu() });
+document.addEventListener("click",function(e){
+  if(!e.target.closest("#sideUser")) toggleSideMenu(false);
+});
+$("suMenu").addEventListener("click",function(e){
+  var b=e.target.closest("[data-act]");
+  if(!b) return;
+  toggleSideMenu(false);
+  var a=b.getAttribute("data-act");
+  if(a==="profile"){
+    if(profile&&profile.username) window.open("profile.html?u="+encodeURIComponent(profile.username),"_blank","noopener");
+    else openProfModal();
+  }
+  else if(a==="edit") openProfModal();
+  else if(a==="settings") setView("impostazioni");
+  else if(a==="privacy") setView("privacy");
+  else if(a==="broker") setView("broker");
+  else if(a==="export") $("exportJsonBtn").click();
+  else if(a==="logout") $("logoutBtn").click();
+});
+document.querySelectorAll("[data-go]").forEach(function(b){
+  b.addEventListener("click",function(){ setView(b.getAttribute("data-go")) });
+});
+document.addEventListener("keydown",function(e){
+  if(e.key!=="Escape") return;
+  toggleSideMenu(false);
+  if(!$("profModal").classList.contains("hidden")) closeProfModal();
+});
+
+/* Preferenze */
+function loadPrefs(){
+  var p=(profile&&profile.preferences)||{};
+  PREFS=Object.assign({theme:"sistema",timezone:"Europe/Rome",dateFormat:"it",numberLocale:"it-IT"},p);
+}
+function applyPrefs(){
+  if(PREFS.theme==="sistema") document.documentElement.removeAttribute("data-theme");
+  else document.documentElement.setAttribute("data-theme",PREFS.theme==="chiaro"?"light":"dark");
+}
+function fillPrefs(){
+  if(!$("prefTheme")) return;
+  $("prefTheme").value=PREFS.theme;
+  $("prefTz").value=PREFS.timezone;
+  $("prefDate").value=PREFS.dateFormat;
+  $("prefNum").value=PREFS.numberLocale;
+}
+$("prefForm").addEventListener("submit",async function(e){
+  e.preventDefault();
+  $("prefMsg").textContent="";$("prefMsg").classList.remove("ok");
+  var np={theme:$("prefTheme").value,timezone:$("prefTz").value,dateFormat:$("prefDate").value,numberLocale:$("prefNum").value};
+  var r=await sb.from("profiles").upsert({user_id:user.id,preferences:np},{onConflict:"user_id"}).select().single();
+  if(r.error){ $("prefMsg").textContent="Salvataggio non riuscito: "+r.error.message; return }
+  profile=r.data; loadPrefs(); applyPrefs(); renderCurrent(); renderSideUser();
+  $("prefMsg").classList.add("ok"); $("prefMsg").textContent="Preferenze salvate.";
+});
+
+/* Modifica profilo */
+var pmBlob=null,pmRemove=false;
+function setPmMsg(t,ok){ $("pmMsg").classList.toggle("ok",!!ok); $("pmMsg").textContent=t }
+function pmPreviewHTML(src,name){
+  return src?'<img src="'+esc(src)+'" alt="">':esc(((name||"?").trim().charAt(0)||"?").toUpperCase());
+}
+function openProfModal(){
+  if(!user) return;
+  pmBlob=null;pmRemove=false;
+  $("pmName").value=(profile&&profile.display_name)||"";
+  $("pmUser").value=(profile&&profile.username)||"";
+  $("pmBio").value=(profile&&profile.bio)||"";
+  $("pmLoc").value=(profile&&profile.location)||"";
+  $("pmStyle").value=(profile&&profile.trading_style)||"";
+  $("pmWeb").value=(profile&&profile.website)||"";
+  var mk=(profile&&profile.markets)||[];
+  document.querySelectorAll("[data-mkt]").forEach(function(c){ c.checked=mk.indexOf(c.getAttribute("data-mkt"))>-1 });
+  $("pmJoined").textContent=dmy((user.created_at||"").slice(0,10));
+  $("pmPreview").innerHTML=pmPreviewHTML(avatarUrl,displayName());
+  updateBioUI();
+  setPmMsg("",false);
+  $("profModal").classList.remove("hidden");
+  $("pmName").focus();
+}
+function closeProfModal(){ $("profModal").classList.add("hidden") }
+function updateBioUI(){
+  var n=$("pmBio").value.length;
+  $("pmBioCount").textContent=(250-n)+" rimasti";
+  $("pmBioPrev").textContent=$("pmBio").value.trim()||"La biografia comparirà qui.";
+}
+$("pmBio").addEventListener("input",updateBioUI);
+$("pmClose").addEventListener("click",closeProfModal);
+$("pmCancel").addEventListener("click",closeProfModal);
+$("profModal").addEventListener("click",function(e){ if(e.target===this) closeProfModal() });
+function cropToSquare(file){
+  return new Promise(function(resolve,reject){
+    var img=new Image(),url=URL.createObjectURL(file);
+    img.onload=function(){
+      var side=Math.min(img.width,img.height),c=document.createElement("canvas");
+      c.width=512;c.height=512;
+      c.getContext("2d").drawImage(img,(img.width-side)/2,(img.height-side)/2,side,side,0,0,512,512);
+      URL.revokeObjectURL(url);
+      c.toBlob(function(b){ b?resolve(b):reject(new Error("Conversione non riuscita.")) },"image/jpeg",0.9);
+    };
+    img.onerror=function(){ URL.revokeObjectURL(url); reject(new Error("Immagine non valida.")) };
+    img.src=url;
+  });
+}
+$("pmFile").addEventListener("change",async function(e){
+  var f=e.target.files[0];
+  if(!f) return;
+  if(["image/jpeg","image/png","image/webp"].indexOf(f.type)<0){ setPmMsg("Formato non supportato: usa JPG, PNG o WebP.",false); return }
+  if(f.size>2*1024*1024){ setPmMsg("Il file supera i 2 MB.",false); return }
+  try{
+    pmBlob=await cropToSquare(f);
+    pmRemove=false;
+    $("pmPreview").innerHTML='<img src="'+esc(URL.createObjectURL(pmBlob))+'" alt="">';
+    setPmMsg("",false);
+  }catch(err){ setPmMsg(err.message,false) }
+  this.value="";
+});
+$("pmRemovePhoto").addEventListener("click",function(){
+  pmBlob=null;pmRemove=true;
+  $("pmPreview").innerHTML=pmPreviewHTML(null,$("pmName").value||displayName());
+});
+$("pmForm").addEventListener("submit",async function(e){
+  e.preventDefault();
+  setPmMsg("",false);
+  var name=$("pmName").value.replace(/\s+/g," ").trim();
+  if(name&&(name.length<2||/[\u0000-\u001f]/.test(name))){ setPmMsg("Il nome visualizzato deve avere almeno 2 caratteri.",false); return }
+  var uname=$("pmUser").value.trim().toLowerCase();
+  if(!/^[a-z0-9_]{3,20}$/.test(uname)){ setPmMsg("Il nome utente deve avere 3-20 caratteri: lettere minuscole, numeri o _.",false); return }
+  var web=$("pmWeb").value.trim();
+  if(web){
+    try{ var wu=new URL(web); if(wu.protocol!=="https:"&&wu.protocol!=="http:") throw new Error(); web=wu.href }
+    catch(_){ setPmMsg("Sito non valido: inizia con https://",false); return }
+  }
+  var markets=Array.prototype.map.call(document.querySelectorAll("[data-mkt]:checked"),function(c){return c.getAttribute("data-mkt")});
+  var avatarPath=(profile&&profile.avatar_path)||null;
+  $("pmSave").disabled=true;
+  try{
+    if(pmBlob){
+      var path=user.id+"/avatar.jpg";
+      var up=await sb.storage.from("avatars").upload(path,pmBlob,{upsert:true,contentType:"image/jpeg"});
+      if(up.error) throw new Error("Caricamento foto non riuscito: "+up.error.message);
+      avatarPath=path;
+    }
+    if(pmRemove){
+      if(avatarPath) await sb.storage.from("avatars").remove([avatarPath]);
+      avatarPath=null;
+    }
+    var payload={user_id:user.id,username:uname,display_name:name||null,bio:$("pmBio").value.trim(),
+      location:$("pmLoc").value.trim()||null,markets:markets,trading_style:$("pmStyle").value.trim()||null,
+      website:web||null,avatar_path:avatarPath};
+    var r=await sb.from("profiles").upsert(payload,{onConflict:"user_id"}).select().single();
+    if(r.error){ setPmMsg(r.error.code==="23505"?"Nome utente già usato, scegline un altro.":"Salvataggio non riuscito: "+r.error.message,false); return }
+    profile=r.data;
+    pmBlob=null;pmRemove=false;
+    await refreshAvatar();
+    renderCurrent();
+    setPmMsg("Profilo salvato.",true);
+    setTimeout(closeProfModal,600);
+  }catch(err){
+    setPmMsg(err.message,false);
+  }finally{
+    $("pmSave").disabled=false;
+  }
+});
+
+/* Privacy e sicurezza */
+function renderPrivacy(){
+  if(!user) return;
+  $("secEmail").textContent=user.email||"—";
+  $("secCreated").textContent=dmy((user.created_at||"").slice(0,10))||"—";
+  $("secLast").textContent=user.last_sign_in_at?new Date(user.last_sign_in_at).toLocaleString("it-IT"):"—";
+  $("secVerified").textContent=user.email_confirmed_at?"Sì":"No";
+  $("secPublic").textContent=profile&&profile.is_public?"Pubblico":"Privato";
+  $("secLb").textContent=profile&&profile.in_leaderboard?"Visibile in classifica":"Non in classifica";
+}
+$("privGoSettings").addEventListener("click",function(){ setView("impostazioni") });
+$("privPwForm").addEventListener("submit",async function(e){
+  e.preventDefault();
+  var a=$("pwNew1").value,b=$("pwNew2").value;
+  $("pwMsg2").classList.remove("ok");$("pwMsg2").textContent="";
+  if(a.length<8){ $("pwMsg2").textContent="La password deve avere almeno 8 caratteri."; return }
+  if(a!==b){ $("pwMsg2").textContent="Le due password non coincidono."; return }
+  var r=await sb.auth.updateUser({password:a});
+  if(r.error){ $("pwMsg2").textContent="Non riuscito: "+r.error.message; return }
+  $("pwMsg2").classList.add("ok");$("pwMsg2").textContent="Password aggiornata.";
+  $("pwNew1").value="";$("pwNew2").value="";
+});
+$("privLogoutAll").addEventListener("click",async function(){
+  if(!confirm("Uscire da tutti i dispositivi?")) return;
+  await sb.auth.signOut({scope:"global"});
+  enterAuth();
+});
+$("privExportBtn").addEventListener("click",function(){ $("exportJsonBtn").click() });
+$("privDelInput").addEventListener("input",function(){ $("privDelBtn").disabled=this.value.trim()!=="ELIMINA" });
+$("privDelBtn").addEventListener("click",async function(){
+  $("privDelBtn").disabled=true;
+  var r=await sb.from("account_deletion_requests").insert({user_id:user.id}).select().single();
+  if(r.error){
+    $("privDelMsg").textContent=r.error.code==="23505"?"Hai già una richiesta di eliminazione registrata.":"Richiesta non riuscita: "+r.error.message;
+    $("privDelBtn").disabled=false;
+    return;
+  }
+  $("privDelMsg").textContent="Richiesta registrata. Il team la gestirà manualmente: al momento non esiste una cancellazione automatica.";
+  $("privDelInput").value="";
+});
 
 /* Avvio */
 if(!ready){
