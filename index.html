@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>TradeDiario: trading journal e backtest candela per candela</title>
-<meta name="description" content="TradeDiario ti aiuta a registrare ogni operazione, fare backtest candela per candela e capire davvero come vanno i tuoi risultati. Dati privati per ogni utente.">
-<meta name="keywords" content="trading journal, diario di trading, backtest, replay, profit factor, risk reward">
+<title>TradeDiario: trading journal, diario di giornata e community</title>
+<meta name="description" content="TradeDiario ti aiuta a registrare ogni operazione, tenere il diario di ogni giornata e capire davvero come vanno i tuoi risultati. Dati privati per ogni utente.">
+<meta name="keywords" content="trading journal, diario di trading, diario della giornata, profit factor, risk reward, community trading">
 <meta name="robots" content="index, follow">
-<meta property="og:title" content="TradeDiario: trading journal e backtest">
-<meta property="og:description" content="Registra le operazioni, fai backtest e misura i tuoi risultati.">
+<meta property="og:title" content="TradeDiario: trading journal e diario di giornata">
+<meta property="og:description" content="Registra le operazioni, tieni il diario di ogni giornata e misura i tuoi risultati.">
 <meta property="og:type" content="website">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebApplication","name":"TradeDiario","applicationCategory":"FinanceApplication","operatingSystem":"Web","offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"},"inLanguage":"it"}
@@ -107,7 +107,7 @@ section{position:relative}
 .step .n{width:68px;height:68px;margin:0 auto 22px;border-radius:50%;display:grid;place-items:center;font:700 22px var(--font-title);background:var(--bg2);border:1px solid rgba(34,197,94,.35);box-shadow:0 0 0 8px rgba(34,197,94,.06);position:relative;z-index:1}
 .step h3{font-size:21px;margin-bottom:10px}
 .step p{color:var(--mute)}
-/* Anteprima replay */
+/* Anteprima schermata */
 .preview{padding:40px 0 120px}
 .screen{position:relative;max-width:1000px;margin:0 auto;border-radius:26px;border:1px solid var(--line);background:linear-gradient(180deg,#121a24,#0d131b);box-shadow:0 60px 120px -50px rgba(0,0,0,.8);overflow:hidden;transform:perspective(1400px) rotateX(6deg);transition:transform .8s var(--ease)}
 .screen.in{transform:perspective(1400px) rotateX(0)}
@@ -228,20 +228,20 @@ footer .legal{max-width:720px;margin-top:18px;font-size:13px;opacity:.85}
   <canvas id="fx" aria-hidden="true"></canvas>
   <div class="grid-lines" aria-hidden="true"></div>
 
-  <div class="chip c1" data-px="-.6" data-py="-.5" style="top:18%;left:7%;--dl:1.4s;--t:8s"><span class="ico" style="background:rgba(34,197,94,.14);color:#22c55e">↗</span>Backtest candela per candela</div>
+  <div class="chip c1" data-px="-.6" data-py="-.5" style="top:18%;left:7%;--dl:1.4s;--t:8s"><span class="ico" style="background:rgba(34,197,94,.14);color:#22c55e">↗</span>Diario della giornata</div>
   <div class="chip c2" data-px=".5" data-py="-.4" style="top:20%;right:8%;--dl:1.6s;--t:9s"><span class="ico" style="background:rgba(59,130,246,.14);color:#60a5fa">⇅</span>Long e Short</div>
   <div class="chip c3" data-px="-.4" data-py=".6" style="top:58%;left:4%;--dl:1.8s;--t:7.5s"><span class="ico" style="background:rgba(245,158,11,.14);color:#fbbf24">◎</span>Stop loss e take profit</div>
   <div class="chip c4" data-px=".6" data-py=".4" style="top:62%;right:6%;--dl:2s;--t:8.5s"><span class="ico" style="background:rgba(239,68,68,.14);color:#f87171">◉</span>Dati privati</div>
 
   <div class="hero-inner">
-    <span class="eyebrow"><span class="dot"></span><b>Nuovo</b> Import dei report e backtest in tempo reale</span>
+    <span class="eyebrow"><span class="dot"></span><b>Nuovo</b> Diario, giornata e community</span>
     <h1 class="headline" id="titolo">
       <span class="word" style="--i:0">Ogni</span> <span class="word" style="--i:1">trade</span> <span class="word" style="--i:2">ha</span> <span class="word" style="--i:3">una</span> <span class="word" style="--i:4">storia.</span><br>
       <span class="accent"><span class="word" style="--i:5">Leggila</span> <span class="word" style="--i:6">con</span> <span class="word" style="--i:7">i</span> <span class="word" style="--i:8">numeri</span>
         <svg viewBox="0 0 400 20" preserveAspectRatio="none" aria-hidden="true"><path d="M2 14 C 90 2, 200 22, 398 6" fill="none" stroke="#22c55e" stroke-width="4" stroke-linecap="round"/></svg>
       </span>
     </h1>
-    <p class="lead">Registra ogni operazione, fai backtest candela per candela e scopri quali setup funzionano davvero. I tuoi dati restano tuoi.</p>
+    <p class="lead">Registra ogni operazione, tieni il diario di ogni giornata e scopri quali setup funzionano davvero. I tuoi dati restano tuoi.</p>
     <div class="cta-row">
       <a class="btn primary lg" href="app">Inizia gratis</a>
       <a class="btn lg" href="#come">Come funziona</a>
@@ -262,8 +262,8 @@ footer .legal{max-width:720px;margin-top:18px;font-size:13px;opacity:.85}
 
 <div class="marquee" aria-hidden="true">
   <div class="marquee-track">
-    <span>Journal</span><span>Backtest</span><span>Long</span><span>Short</span><span>Stop loss</span><span>Take profit</span><span>Risk reward</span><span>Profit factor</span><span>Replay candela per candela</span><span>Winrate</span>
-    <span>Journal</span><span>Backtest</span><span>Long</span><span>Short</span><span>Stop loss</span><span>Take profit</span><span>Risk reward</span><span>Profit factor</span><span>Replay candela per candela</span><span>Winrate</span>
+    <span>Journal</span><span>Giornata</span><span>Long</span><span>Short</span><span>Stop loss</span><span>Take profit</span><span>Risk reward</span><span>Profit factor</span><span>Community</span><span>Winrate</span>
+    <span>Journal</span><span>Giornata</span><span>Long</span><span>Short</span><span>Stop loss</span><span>Take profit</span><span>Risk reward</span><span>Profit factor</span><span>Community</span><span>Winrate</span>
   </div>
 </div>
 <section class="feat" id="funzioni">
@@ -271,14 +271,14 @@ footer .legal{max-width:720px;margin-top:18px;font-size:13px;opacity:.85}
     <div class="feat-head reveal">
       <div class="kicker">Funzioni</div>
       <h2 class="h2">Tutto quello che serve per migliorare</h2>
-      <p class="lead2">Dal diario delle operazioni al backtest, con statistiche che si aggiornano da sole.</p>
+      <p class="lead2">Dal diario delle operazioni alla giornata guidata, con statistiche che si aggiornano da sole.</p>
     </div>
     <div class="grid">
       <article class="card reveal" style="--d:.0s"><div class="glow"></div><div class="icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></div><h3>Diario completo</h3><p>Registra ingresso, uscita, quantità, commissioni e note. Il calendario mostra ogni giorno con il suo risultato.</p></article>
-      <article class="card reveal" style="--d:.08s"><div class="glow"></div><div class="icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg></div><h3>Backtest candela per candela</h3><p>Scegli il mercato e la data, poi avanza una candela alla volta. Apri Long o Short con stop loss e take profit.</p></article>
+      <article class="card reveal" style="--d:.08s"><div class="glow"></div><div class="icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg></div><h3>Giornata guidata</h3><p>Prepara la sessione con checklist e obiettivi, annota cosa succede mentre operi e chiudi con una lezione da ricordare.</p></article>
       <article class="card reveal" style="--d:.16s"><div class="glow"></div><div class="icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></div><h3>Statistiche che contano</h3><p>Winrate, profit factor, drawdown, risk reward e consistenza giornaliera, calcolati sulle tue operazioni reali.</p></article>
       <article class="card reveal" style="--d:.0s"><div class="glow"></div><div class="icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 17v3h16v-3"/></svg></div><h3>Importa i report</h3><p>Carica lo storico esportato dalla piattaforma. Nessuna password, nessun accesso al conto.</p></article>
-      <article class="card reveal" style="--d:.08s"><div class="glow"></div><div class="icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg></div><h3>Classifica e profilo</h3><p>Scegli se comparire in classifica e cosa mostrare. Il tuo profilo pubblico si condivide con un link.</p></article>
+      <article class="card reveal" style="--d:.08s"><div class="glow"></div><div class="icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg></div><h3>Community e profilo</h3><p>Condividi strategie e setup nelle stanze dedicate, e mostra il tuo profilo pubblico con un link, solo con ciò che scegli.</p></article>
       <article class="card reveal" style="--d:.16s"><div class="glow"></div><div class="icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div><h3>Dati privati</h3><p>Le tue operazioni sono visibili solo a te. Puoi esportarle o chiedere l'eliminazione del tuo account in qualsiasi momento.</p></article>
     </div>
   </div>
@@ -293,7 +293,7 @@ footer .legal{max-width:720px;margin-top:18px;font-size:13px;opacity:.85}
     <div class="steps" id="steps">
       <div class="step reveal" style="--d:.0s"><div class="n">1</div><h3>Crea l'account</h3><p>Scegli il nome utente e accedi. Ci vuole meno di un minuto.</p></div>
       <div class="step reveal" style="--d:.12s"><div class="n">2</div><h3>Registra o importa</h3><p>Inserisci le operazioni a mano oppure carica il report della piattaforma.</p></div>
-      <div class="step reveal" style="--d:.24s"><div class="n">3</div><h3>Analizza e migliora</h3><p>Guarda dove perdi, testa le idee con il backtest e ripeti ciò che funziona.</p></div>
+      <div class="step reveal" style="--d:.24s"><div class="n">3</div><h3>Analizza e migliora</h3><p>Guarda dove perdi, rileggi le giornate e ripeti ciò che funziona.</p></div>
     </div>
   </div>
 </section>
@@ -343,7 +343,7 @@ footer .legal{max-width:720px;margin-top:18px;font-size:13px;opacity:.85}
     <div class="faq-list" id="faq">
       <div class="qa reveal"><button type="button" aria-expanded="false"><span>È gratuito?</span><span class="plus">+</span></button><div class="ans"><div>Al momento sì. Se in futuro ci saranno costi, li comunicheremo prima.</div></div></div>
       <div class="qa reveal"><button type="button" aria-expanded="false"><span>Devo dare la password del mio broker?</span><span class="plus">+</span></button><div class="ans"><div>No. Non chiediamo mai credenziali del conto. Puoi importare il report esportato dalla piattaforma.</div></div></div>
-      <div class="qa reveal"><button type="button" aria-expanded="false"><span>Quali mercati posso testare?</span><span class="plus">+</span></button><div class="ans"><div>Criptovalute, forex e oro nel backtest. Gli altri mercati dipendono dai dati disponibili.</div></div></div>
+      <div class="qa reveal"><button type="button" aria-expanded="false"><span>Quali mercati posso registrare?</span><span class="plus">+</span></button><div class="ans"><div>Puoi registrare operazioni su qualsiasi mercato, a mano oppure importando il report della piattaforma.</div></div></div>
       <div class="qa reveal"><button type="button" aria-expanded="false"><span>Chi vede i miei dati?</span><span class="plus">+</span></button><div class="ans"><div>Solo tu. Il profilo diventa pubblico soltanto se lo attivi, e mostri solo ciò che scegli.</div></div></div>
       <div class="qa reveal"><button type="button" aria-expanded="false"><span>Questo sito dà consigli di trading?</span><span class="plus">+</span></button><div class="ans"><div>No. È uno strumento per registrare e analizzare. Il trading comporta il rischio di perdere il capitale.</div></div></div>
     </div>
