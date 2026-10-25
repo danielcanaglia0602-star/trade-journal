@@ -577,6 +577,135 @@ body{
 .stat b.neg,.big.neg{color:#dc2626}
 :root[data-theme="dark"] .stat b.pos{color:#4ade80}
 :root[data-theme="dark"] .stat b.neg{color:#f87171}
+
+/* ===== Rifinitura finale ===== */
+/* Titoli ed eyebrow */
+h1{position:relative;padding-bottom:2px}
+h1::after{content:"";display:block;width:44px;height:3px;border-radius:3px;margin-top:10px;background:linear-gradient(90deg,#22c55e,#16a34a 55%,transparent)}
+.sub{margin-bottom:26px}
+/* Pannelli con profondità */
+.panel{border-radius:22px;transition:box-shadow .3s ease,border-color .3s ease}
+.panel:hover{border-color:color-mix(in srgb,var(--accent) 22%,var(--line))}
+.panel h2{position:relative;padding-left:12px}
+.panel h2::before{content:"";position:absolute;left:0;top:.22em;bottom:.22em;width:3px;border-radius:3px;background:linear-gradient(180deg,var(--accent),var(--gain))}
+/* Statistiche */
+.stats{background:transparent;border:0;gap:12px;box-shadow:none}
+.stat{border:1px solid color-mix(in srgb,var(--line) 75%,transparent);border-radius:18px;background:linear-gradient(180deg,color-mix(in srgb,var(--panel) 96%,transparent),var(--panel));box-shadow:var(--shadow-sm);transition:transform .2s ease,border-color .2s ease}
+.stat:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--accent) 35%,var(--line))}
+.stat b{font-size:22px}
+/* Hero */
+.hero .panel{border-radius:24px}
+.big{font-size:32px}
+/* Tabelle più leggibili */
+table{font-variant-numeric:tabular-nums}
+thead th{border-bottom:1px solid color-mix(in srgb,var(--line) 90%,transparent)}
+/* Pulsanti secondari */
+button.ghost{border-radius:999px;padding:8px 16px}
+/* Campi con etichetta più pulita */
+label{gap:6px}
+input,select,textarea{border-radius:14px}
+/* Schede di navigazione dentro le pagine */
+.lb-tabs button.on,.tabs button.on{box-shadow:0 6px 16px -10px var(--accent)}
+/* Modali */
+.modal-head h2{font-size:20px}
+.modal-card{background:linear-gradient(180deg,color-mix(in srgb,var(--panel) 97%,transparent),var(--panel))}
+/* Sidebar */
+.nav button{font-size:14.5px}
+.nav button:not([aria-current="page"]){color:color-mix(in srgb,var(--ink) 88%,var(--mute))}
+.nav button:not([aria-current="page"]):hover{color:var(--ink)}
+.side-user{background:linear-gradient(180deg,transparent,color-mix(in srgb,var(--accent) 6%,transparent))}
+.su-av{font-size:15px}
+/* Calendario */
+.cal{gap:8px}
+.day{min-height:82px;border-radius:16px}
+.day .p{font-size:15px}
+/* Feedback e liste */
+.fb-card{transition:background .2s ease}
+.fb-card:hover{background:color-mix(in srgb,var(--accent) 3%,transparent)}
+/* Messaggi */
+.msg:not(:empty){border:1px solid color-mix(in srgb,var(--loss) 25%,transparent)}
+.msg.ok:not(:empty){border-color:color-mix(in srgb,var(--gain) 30%,transparent)}
+/* Pulsante principale */
+button.btn{border-radius:999px;font-size:15px}
+button.btn:active:not(:disabled){transform:scale(.98)}
+/* Piccole finiture */
+::placeholder{color:color-mix(in srgb,var(--mute) 70%,transparent)}
+input[type=range]{height:6px;border-radius:999px}
+hr{border:0;border-top:1px solid color-mix(in srgb,var(--line) 70%,transparent)}
+@media (max-width:860px){
+  h1::after{width:34px}
+  .big{font-size:26px}
+}
+
+/* ===== Passata finale: profondità e luce ===== */
+body::before{
+  content:"";position:fixed;inset:-20%;z-index:0;pointer-events:none;opacity:.9;
+  background:
+    radial-gradient(40% 34% at 22% 18%,rgba(34,197,94,.16),transparent 70%),
+    radial-gradient(36% 30% at 82% 26%,rgba(59,130,246,.11),transparent 70%),
+    radial-gradient(38% 32% at 70% 86%,rgba(239,68,68,.10),transparent 70%);
+  filter:blur(30px);animation:drift 24s ease-in-out infinite alternate;
+}
+@keyframes drift{
+  0%{transform:translate3d(0,0,0) scale(1)}
+  50%{transform:translate3d(-2%,3%,0) scale(1.04)}
+  100%{transform:translate3d(3%,-2%,0) scale(1)}
+}
+.app,.authwrap{position:relative;z-index:1}
+/* Accesso */
+.authwrap{background:radial-gradient(600px 360px at 50% 0%,color-mix(in srgb,var(--accent) 14%,transparent),transparent 70%)}
+.authbox{
+  background:linear-gradient(180deg,color-mix(in srgb,var(--panel) 90%,transparent),color-mix(in srgb,var(--panel) 98%,transparent));
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border-radius:28px;padding:34px;box-shadow:0 40px 80px -40px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.06);
+}
+.authbox h1{font-size:38px}
+.authbox h1::after{margin-left:0}
+/* Pannelli con vetro e riflesso */
+.panel{position:relative;overflow:hidden}
+.panel::before{
+  content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(135deg,rgba(255,255,255,.05),transparent 38%);
+}
+.panel:hover{box-shadow:0 1px 2px rgba(0,0,0,.05),0 30px 60px -32px rgba(0,0,0,.55),0 0 0 1px color-mix(in srgb,var(--accent) 16%,transparent)}
+/* Statistiche con filo luminoso */
+.stat{position:relative;overflow:hidden}
+.stat::after{content:"";position:absolute;left:0;right:0;top:0;height:2px;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--accent) 70%,transparent),transparent);opacity:.7}
+.stat b{letter-spacing:-.02em}
+/* Hero con gradiente */
+.hero .panel{background:radial-gradient(520px 220px at 100% -10%,color-mix(in srgb,var(--accent) 18%,transparent),transparent 70%),radial-gradient(380px 200px at 0% 120%,rgba(34,197,94,.10),transparent 70%),linear-gradient(180deg,color-mix(in srgb,var(--panel) 92%,transparent),var(--panel))}
+.big{background:linear-gradient(180deg,var(--ink),color-mix(in srgb,var(--ink) 70%,var(--mute)));-webkit-background-clip:text;background-clip:text;color:transparent}
+.big[style*="color"]{background:none;-webkit-background-clip:border-box;background-clip:border-box;color:inherit}
+/* Pulsanti con luce */
+button.btn{box-shadow:0 14px 30px -14px var(--accent),inset 0 1px 0 rgba(255,255,255,.24)}
+button.btn:hover:not(:disabled){filter:brightness(1.06);box-shadow:0 18px 36px -14px var(--accent),inset 0 1px 0 rgba(255,255,255,.28)}
+button.ghost:hover:not(:disabled){background:color-mix(in srgb,var(--accent) 8%,transparent)}
+/* Menu laterale */
+.nav button[aria-current="page"]{box-shadow:0 14px 28px -14px var(--accent),inset 0 1px 0 rgba(255,255,255,.2)}
+.nav button:not([aria-current="page"]):hover{background:color-mix(in srgb,var(--accent) 7%,transparent)}
+.brand{font-size:24px}
+/* Tabelle */
+tbody tr:last-child td{border-bottom:0}
+th:first-child,td:first-child{padding-left:14px}
+th:last-child,td:last-child{padding-right:14px}
+/* Schede */
+.lb-tabs{box-shadow:inset 0 1px 2px rgba(0,0,0,.08)}
+/* Modali */
+.modal-card{position:relative;overflow:hidden}
+.modal-card::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,#22c55e,var(--accent),#3b82f6)}
+/* Sidebar con luce */
+.side{box-shadow:inset -1px 0 0 rgba(255,255,255,.03),20px 0 50px -40px rgba(0,0,0,.5)}
+.su-btn{background:color-mix(in srgb,var(--panel) 60%,transparent)}
+.su-btn:hover{background:color-mix(in srgb,var(--accent) 8%,transparent)}
+/* Segnalazioni e importazione */
+.imp-summary .kv b{font-size:15px}
+/* Rifiniture */
+.muted{opacity:.95}
+@media (max-width:860px){
+  .authbox{padding:24px}
+  .authbox h1{font-size:30px}
+}
+@media (prefers-reduced-motion:reduce){body::before{animation:none}}
 </style>
 </head>
 <body>
