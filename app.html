@@ -13,8 +13,8 @@
 @media (prefers-color-scheme:dark){:root{--bg:#121416;--side:#0d0f11;--panel:#1a1e21;--ink:#ecebe6;--mute:#9a9da2;--line:#2b2f33;--gain:#7fd1ae;--loss:#ff8a8a;--accent:#7fd1ae;--accent-ink:#121416;--amber:#e0a040;color-scheme:dark}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.5 var(--font-body);font-variant-numeric:tabular-nums}
-h1{font:700 26px var(--font-title);margin:0 0 4px}
-h2{font:700 17px var(--font-title);margin:0 0 12px}
+h1{font:700 34px var(--font-title);margin:0 0 4px}
+h2{font:700 22px var(--font-title);margin:0 0 12px}
 p{margin:0}
 .sub{color:var(--mute);margin:0 0 22px}
 .lab{font-size:12px;color:var(--mute);display:block}
@@ -196,6 +196,7 @@ table th{font-weight:600}
     <h1>TradeDiario</h1>
     <p class="sub" id="authSub">Accedi al tuo journal</p>
     <form id="authForm">
+      <label id="authUserWrap" class="hidden">Nome utente pubblico (3-20 caratteri: minuscole, numeri, _)<input id="authUser" maxlength="20" autocomplete="username"></label>
       <label>Email<input type="email" id="email" required autocomplete="email"></label>
       <label>Password<input type="password" id="password" required minlength="8" autocomplete="current-password"></label>
       <div class="msg" id="authMsg" role="alert"></div>
@@ -420,6 +421,15 @@ table th{font-weight:600}
           <div><button class="btn" type="submit" id="profBtn">Salva profilo</button></div>
         </form>
       </section>
+            <section class="panel">
+        <h2>Dimensione del testo</h2>
+        <p style="color:var(--mute);margin-bottom:12px">Scegli la grandezza della scrittura in tutto il sito.</p>
+        <div class="lb-tabs" id="sizeTabs">
+          <button type="button" data-size="piccolo">Piccolo</button>
+          <button type="button" data-size="medio">Medio</button>
+          <button type="button" data-size="grande">Grande</button>
+        </div>
+      </section>
       <section class="panel">
         <h2>Cambia password</h2>
         <form id="pwForm">
@@ -447,6 +457,7 @@ table th{font-weight:600}
 <script>
 (function(){
 var cfg=window.TRADEDIARIO_CONFIG||{};
+applySize(localStorage.getItem("tdSize")||"medio");
 var ready=!!cfg.SUPABASE_URL&&cfg.SUPABASE_URL.indexOf("IL-TUO")===-1;
 var sb=ready?supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY):null;
 
@@ -1164,6 +1175,10 @@ async function loadAll(){
   var b=await sb.from("backtests").select("*").order("created_at",{ascending:false});
   btErr=!!b.error;backtests=b.error?[]:(b.data||[]);
   await loadProfile();
+  if(!profile&&user&&user.user_metadata&&user.user_metadata.username){
+    await sb.from("profiles").upsert({user_id:user.id,username:user.user_metadata.username,starting_capital:10000},{onConflict:"user_id"});
+    await loadProfile();
+  }
   await refreshRank();
   renderCurrent();
 }
@@ -1189,13 +1204,20 @@ $("authForm").addEventListener("submit",async function(e){
   e.preventDefault();
   var btn=$("authBtn");btn.disabled=true;$("authMsg").textContent="";$("authMsg").classList.remove("ok");
   var creds={email:$("email").value.trim(),password:$("password").value};
-  var r=authMode==="login"?await sb.auth.signInWithPassword(creds):await sb.auth.signUp(creds);
+  var uname=$("authUser").value.trim().toLowerCase();
+  if(authMode==="signup"&&!/^[a-z0-9_]{3,20}$/.test(uname)){
+    $("authMsg").textContent="Scegli un nome utente di 3-20 caratteri: lettere minuscole, numeri o _.";
+    btn.disabled=false;return;
+  }
+  var r=authMode==="login"?await sb.auth.signInWithPassword(creds):await sb.auth.signUp({email:creds.email,password:creds.password,options:{data:{username:uname}}});
   btn.disabled=false;
   if(r.error){$("authMsg").textContent=r.error.message;return}
   if(authMode==="signup"&&!r.data.session){$("authMsg").classList.add("ok");$("authMsg").textContent="Account creato. Ora puoi accedere.";return}
   if(r.data.user) enterApp(r.data.user);
 });
 $("logoutBtn").addEventListener("click",async function(){await sb.auth.signOut();enterAuth()});
+
+$("toggleAuth").addEventListener("click",function(){ $("authUserWrap").classList.toggle("hidden",authMode==="login") });
 
 /* Menu */
 document.querySelectorAll(".nav button").forEach(function(b){
@@ -1323,6 +1345,18 @@ document.addEventListener("keydown",function(e){
   else if(k==="b") bSubmit("long");
   else if(k==="s") bSubmit("short");
   else if(k==="c"&&bPos){bClose(bAll[bCur].c,"Manuale");drawBt();updateBt()}
+});
+
+/* Dimensione del testo */
+function applySize(n){
+  var z={piccolo:0.92,medio:1,grande:1.12};
+  if(!z[n]) n="medio";
+  document.body.style.zoom=z[n];
+  localStorage.setItem("tdSize",n);
+  document.querySelectorAll("#sizeTabs [data-size]").forEach(function(b){b.classList.toggle("on",b.getAttribute("data-size")===n)});
+}
+document.querySelectorAll("#sizeTabs [data-size]").forEach(function(b){
+  b.addEventListener("click",function(){applySize(b.getAttribute("data-size"))});
 });
 
 /* Leaderboard: controlli */
