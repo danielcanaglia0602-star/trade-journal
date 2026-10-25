@@ -517,6 +517,22 @@ tbody tr:hover td{background:color-mix(in srgb,var(--accent) 6%,transparent)}
   .side{padding:14px}
   .brand{padding:0 6px 12px}
 }
+
+.fb-card{display:block}
+.fb-card header{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px}
+.fb-meta{font-size:12px;color:var(--mute);margin:0 0 8px}
+.fb-msg{white-space:pre-wrap;word-break:break-word;margin:0}
+.fb-badge{font-size:11px;padding:4px 10px;border-radius:999px;font-weight:600;border:1px solid var(--line);color:var(--mute);white-space:nowrap}
+.fb-nuovo{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 50%,transparent);background:color-mix(in srgb,var(--accent) 12%,transparent)}
+.fb-in_lavorazione{color:var(--amber,#c98a1b);border-color:color-mix(in srgb,#c98a1b 50%,transparent)}
+.fb-risolto{color:var(--gain);border-color:color-mix(in srgb,var(--gain) 50%,transparent)}
+.fb-reply{margin-top:12px;padding:12px 14px;border-radius:14px;background:color-mix(in srgb,var(--accent) 8%,transparent);border:1px solid color-mix(in srgb,var(--accent) 25%,transparent)}
+.fb-reply span{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--mute);font-weight:600}
+.fb-reply p{margin:6px 0 0;white-space:pre-wrap;word-break:break-word}
+#v-supporto .panel+.panel,#v-admin .panel+.panel{margin-top:18px}
+#admList .fb-card+.fb-card{margin-top:14px}
+#fbList .fb-card{padding:16px 0;border-bottom:1px solid var(--line)}
+#fbList .fb-card:last-child{border-bottom:0}
 </style>
 </head>
 <body>
@@ -560,6 +576,8 @@ tbody tr:hover td{background:color-mix(in srgb,var(--accent) 6%,transparent)}
         <button type="button" role="menuitem" data-act="broker"><span class="ic">⇄</span>Connessioni broker</button>
         <button type="button" role="menuitem" data-act="export"><span class="ic">⇩</span>Esporta i miei dati</button>
         <hr>
+        <button type="button" role="menuitem" data-act="support"><span class="ic">✉</span>Supporto e segnalazioni</button>
+        <button type="button" role="menuitem" id="suAdmin" class="hidden" data-act="admin"><span class="ic">★</span>Segnalazioni ricevute</button>
         <button type="button" role="menuitem" class="danger" data-act="logout"><span class="ic">⏻</span>Esci</button>
       </div>
       <button type="button" class="su-btn" id="suBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="suMenu">
@@ -881,6 +899,45 @@ tbody tr:hover td{background:color-mix(in srgb,var(--accent) 6%,transparent)}
         <p class="muted" style="margin-top:10px">I collegamenti diretti richiedono un'integrazione ufficiale del broker, con accesso in sola lettura tramite OAuth. Questa integrazione non è ancora disponibile. Nel frattempo puoi inserire le operazioni manualmente in Operazioni, oppure esportare i tuoi dati.</p>
         <div style="margin-top:14px"><button class="ghost" type="button" data-go="operazioni">Vai a Operazioni</button></div>
       </section>
+    </section>
+
+    <section id="v-supporto" class="view hidden">
+      <h1>Supporto e segnalazioni</h1>
+      <p class="sub">Segnala un problema, un errore o un'idea. Leggo tutte le segnalazioni e rispondo qui, nella sezione qui sotto.</p>
+      <section class="panel">
+        <h2>Nuova segnalazione</h2>
+        <form id="fbForm" autocomplete="off">
+          <label>Tipo di segnalazione
+            <select id="fbCat">
+              <option value="bug">Bug o errore</option>
+              <option value="problema">Problema di utilizzo</option>
+              <option value="idea">Idea o miglioramento</option>
+              <option value="altro">Altro</option>
+            </select>
+          </label>
+          <label style="margin-top:12px"><span>Messaggio <span class="count" id="fbCount">2000 rimasti</span></span>
+            <textarea id="fbMsg" rows="6" maxlength="2000" required placeholder="Descrivi cosa è successo o cosa vorresti: più dettagli aiutano."></textarea>
+          </label>
+          <div class="msg" id="fbMsg2" role="alert"></div>
+          <div><button class="btn" type="submit" id="fbSend">Invia segnalazione</button></div>
+        </form>
+      </section>
+      <section class="panel">
+        <h2>Le mie segnalazioni</h2>
+        <div id="fbList"></div>
+      </section>
+    </section>
+
+    <section id="v-admin" class="view hidden">
+      <h1>Segnalazioni ricevute</h1>
+      <p class="sub">Area riservata al proprietario del sito.</p>
+      <div class="lb-tabs" id="admFilter">
+        <button type="button" data-f="tutti" class="on">Tutte</button>
+        <button type="button" data-f="nuovo">Nuove</button>
+        <button type="button" data-f="in_lavorazione">In lavorazione</button>
+        <button type="button" data-f="risolto">Risolte</button>
+      </div>
+      <div id="admList" style="margin-top:18px"></div>
     </section>
 
     <section id="v-impostazioni" class="view hidden">
@@ -1810,9 +1867,13 @@ function renderCurrent(){
   if(view==="backtest") renderBacktest();
   if(view==="impostazioni") renderImpostazioni();
   if(view==="privacy") renderPrivacy();
+  if(view==="supporto") renderMyFeedback();
+  if(view==="admin") renderAdmin();
   if(view==="leaderboard") loadLeaderboard();
 }
 function setView(v){
+  if(v==="admin"&&!isAdmin()) v="supporto";
+  if(v!=="supporto"&&v!=="admin") lastNonSupportView=v;
   view=v;
   document.querySelectorAll(".view").forEach(function(s){s.classList.toggle("hidden",s.id!=="v-"+v)});
   document.querySelectorAll(".nav button").forEach(function(b){
@@ -2343,6 +2404,7 @@ function displayName(){
 function renderSideUser(){
   var n=displayName();
   $("suName").textContent=n;
+  $("suAdmin").classList.toggle("hidden",!isAdmin());
   $("suAv").innerHTML=avatarUrl?'<img src="'+esc(avatarUrl)+'" alt="">':esc((n.trim().charAt(0)||"?").toUpperCase());
 }
 async function refreshAvatar(){
@@ -2375,6 +2437,8 @@ $("suMenu").addEventListener("click",function(e){
   else if(a==="settings") setView("impostazioni");
   else if(a==="privacy") setView("privacy");
   else if(a==="broker") setView("broker");
+  else if(a==="support") setView("supporto");
+  else if(a==="admin") setView("admin");
   else if(a==="export") $("exportJsonBtn").click();
   else if(a==="logout") $("logoutBtn").click();
 });
@@ -2717,6 +2781,76 @@ $("impGo").addEventListener("click",async function(){
   else { $("impMsg").classList.add("ok");$("impMsg").textContent="Importate "+ok+" operazioni."; }
   $("impFile").value="";impParsed=[];
   renderImportPanel();
+});
+
+/* Supporto e segnalazioni */
+var ADMIN_EMAIL="danielcanaglia0602@gmail.com";
+var admFilter="tutti";
+var FB_CAT={bug:"Bug o errore",problema:"Problema di utilizzo",idea:"Idea o miglioramento",altro:"Altro"};
+var FB_STATUS={nuovo:"Nuova",in_lavorazione:"In lavorazione",risolto:"Risolta"};
+function isAdmin(){ return !!(user&&user.email&&user.email.toLowerCase()===ADMIN_EMAIL) }
+function fbBadge(st){ return '<span class="fb-badge fb-'+esc(st)+'">'+esc(FB_STATUS[st]||st)+'</span>' }
+$("fbMsg").addEventListener("input",function(){ $("fbCount").textContent=(2000-this.value.length)+" rimasti" });
+$("fbForm").addEventListener("submit",async function(e){
+  e.preventDefault();
+  var msg=$("fbMsg").value.trim();
+  $("fbMsg2").classList.remove("ok");$("fbMsg2").textContent="";
+  if(msg.length<10){ $("fbMsg2").textContent="Scrivi almeno 10 caratteri, così posso capire il problema."; return }
+  $("fbSend").disabled=true;
+  var r=await sb.from("feedback").insert({user_id:user.id,contact_email:user.email||"",category:$("fbCat").value,message:msg,page:lastNonSupportView||""}).select().single();
+  $("fbSend").disabled=false;
+  if(r.error){ $("fbMsg2").textContent="Invio non riuscito: "+r.error.message; return }
+  $("fbMsg").value="";$("fbCount").textContent="2000 rimasti";
+  $("fbMsg2").classList.add("ok");$("fbMsg2").textContent="Segnalazione inviata. Grazie: la leggo appena possibile.";
+  renderMyFeedback();
+});
+var lastNonSupportView="";
+async function renderMyFeedback(){
+  $("fbList").innerHTML='<p class="muted">Carico…</p>';
+  var r=await sb.from("feedback").select("*").order("created_at",{ascending:false});
+  if(r.error){ $("fbList").innerHTML='<p class="muted">Non riesco a caricare le segnalazioni.</p>'; return }
+  if(!r.data.length){ $("fbList").innerHTML='<p class="muted">Non hai ancora inviato segnalazioni.</p>'; return }
+  $("fbList").innerHTML=r.data.map(function(f){
+    return '<article class="fb-card"><header><b>'+esc(FB_CAT[f.category]||f.category)+'</b>'+fbBadge(f.status)+'</header>'+
+      '<p class="fb-meta">'+esc(dmy(f.created_at.slice(0,10)))+'</p><p class="fb-msg">'+esc(f.message)+'</p>'+
+      (f.reply?'<div class="fb-reply"><span>Risposta del team</span><p>'+esc(f.reply)+'</p></div>':'')+'</article>';
+  }).join("");
+}
+async function renderAdmin(){
+  if(!isAdmin()) return;
+  $("admList").innerHTML='<p class="muted">Carico…</p>';
+  var r=await sb.from("feedback").select("*").order("created_at",{ascending:false});
+  if(r.error){ $("admList").innerHTML='<p class="muted">Non riesco a caricare le segnalazioni: '+esc(r.error.message)+'</p>'; return }
+  var rows=r.data.filter(function(f){return admFilter==="tutti"||f.status===admFilter});
+  if(!rows.length){ $("admList").innerHTML='<p class="muted">Nessuna segnalazione in questa categoria.</p>'; return }
+  document.querySelectorAll("#admFilter [data-f]").forEach(function(b){b.classList.toggle("on",b.getAttribute("data-f")===admFilter)});
+  $("admList").innerHTML=rows.map(function(f){
+    var opts=Object.keys(FB_STATUS).map(function(k){return '<option value="'+k+'"'+(k===f.status?' selected':'')+'>'+FB_STATUS[k]+'</option>'}).join("");
+    return '<article class="panel fb-card" data-id="'+esc(f.id)+'">'+
+      '<header><b>'+esc(FB_CAT[f.category]||f.category)+'</b>'+fbBadge(f.status)+'</header>'+
+      '<p class="fb-meta">'+esc(dmy(f.created_at.slice(0,10)))+' · '+esc(f.contact_email||"utente")+(f.page?' · dalla pagina: '+esc(f.page):'')+'</p>'+
+      '<p class="fb-msg">'+esc(f.message)+'</p>'+
+      '<div class="row" style="margin-top:12px"><label>Stato<select class="fb-status">'+opts+'</select></label></div>'+
+      '<label style="margin-top:10px">Risposta all\'utente<textarea class="fb-reply-in" rows="3" maxlength="2000">'+esc(f.reply||"")+'</textarea></label>'+
+      '<div class="pm-actions"><button class="btn fb-save" type="button">Salva risposta</button></div></article>';
+  }).join("");
+}
+$("admFilter").addEventListener("click",function(e){
+  var b=e.target.closest("[data-f]");
+  if(!b) return;
+  admFilter=b.getAttribute("data-f");
+  renderAdmin();
+});
+$("admList").addEventListener("click",async function(e){
+  var b=e.target.closest(".fb-save");
+  if(!b) return;
+  var card=b.closest("[data-id]"),id=card.getAttribute("data-id");
+  var st=card.querySelector(".fb-status").value,rep=card.querySelector(".fb-reply-in").value.trim();
+  b.disabled=true;
+  var r=await sb.from("feedback").update({status:st,reply:rep}).eq("id",id).select().single();
+  b.disabled=false;
+  if(r.error){ alert("Salvataggio non riuscito: "+r.error.message); return }
+  renderAdmin();
 });
 
 /* Avvio */
