@@ -262,6 +262,46 @@ table th{font-weight:600}
   .tvx{grid-template-columns:1fr}
   .bt-vtools{flex-direction:row;border-right:0;border-bottom:1px solid var(--line);overflow-x:auto}
 }
+
+body.bt-focus .side{display:none}
+body.bt-focus .app{display:block}
+body.bt-focus main{padding:0!important;max-width:none!important;height:100vh;overflow:hidden}
+#btSessionView{height:100vh;display:flex;flex-direction:column;background:var(--panel)}
+.tvf-top{height:48px;display:flex;align-items:center;gap:8px;padding:0 10px;border-bottom:1px solid var(--line);background:var(--side);overflow-x:auto;white-space:nowrap;flex:none}
+.tvf-top button,.tvf-top a,.tvf-top select{font-size:12px;padding:6px 10px;border-radius:8px;flex:none}
+.tvf-top a{text-decoration:none;color:var(--ink);border:1px solid var(--line)}
+.tvf-title{font-size:15px;margin-right:4px}
+.tvf-group{display:flex;gap:2px;border:1px solid var(--line);border-radius:8px;padding:2px}
+.tvf-group button{border:0;padding:5px 8px;background:transparent;border-radius:6px}
+.tvf-group button.on{background:var(--accent);color:var(--accent-ink)}
+.tvf-ind{display:flex;gap:4px}
+.tvf-ind button{padding:5px 8px;font-size:11px;border-radius:6px}
+.tvf-top .spacer{flex:1}
+.tvf-body{flex:1;min-height:0;display:grid;grid-template-columns:52px minmax(0,1fr) 6px var(--panelW,330px)}
+#tvfBody[data-collapsed="1"]{grid-template-columns:52px minmax(0,1fr) 0 0}
+#tvfBody[data-collapsed="1"] .tvf-panel,#tvfBody[data-collapsed="1"] .tvf-resizer{display:none}
+.tvf-tools{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;border-right:1px solid var(--line);overflow-y:auto;background:var(--side)}
+.tvf-tools button{width:42px;height:40px;padding:0;font-size:12px;border-radius:8px;border:1px solid transparent;background:transparent;flex:none}
+.tvf-tools button:hover:not(:disabled){border-color:var(--line);background:var(--panel)}
+.tvf-tools button.on{background:var(--accent);color:var(--accent-ink)}
+.tvf-tools button:disabled{opacity:.3;cursor:not-allowed}
+.tvf-chart{position:relative;min-width:0;min-height:0;display:flex;flex-direction:column;border:0;border-radius:0;background:var(--panel);overflow:hidden}
+#btChart{flex:1;min-height:0;width:100%}
+#btTvWrap{height:42%;border-top:1px solid var(--line)}
+#tvEmbed{width:100%;height:100%}
+.tvf-nav{display:flex;gap:4px;padding:6px 8px;border-top:1px solid var(--line);align-items:center;flex-wrap:wrap;background:var(--side)}
+.tvf-nav button{font-size:12px;padding:4px 8px;border-radius:6px}
+.tvf-resizer{cursor:col-resize;background:var(--line);touch-action:none}
+.tvf-resizer:hover{background:var(--accent)}
+.tvf-panel{overflow-y:auto;padding:12px;background:var(--panel);min-width:0;border-left:0}
+.bt-legend{top:6px;left:10px}
+.bt-measure{position:absolute;top:6px;right:12px;z-index:5;margin:0;min-height:0}
+#btChart .empty{padding-top:0!important}
+@media (max-width:900px){
+  .tvf-body{grid-template-columns:44px minmax(0,1fr)}
+  .tvf-resizer{display:none}
+  .tvf-panel{grid-column:1 / -1;border-top:1px solid var(--line);max-height:45vh}
+}
 </style>
 </head>
 <body>
@@ -371,46 +411,69 @@ table th{font-weight:600}
       </div>
 
       <div id="btSessionView" class="hidden">
-        <div class="tvx-bar">
+        <header class="tvf-top">
           <button class="ghost" id="btBack" type="button">← Sessioni</button>
-          <b id="btTitle" class="tvx-title"></b>
-          <div class="bt-tools tvx-ind">
-            <button type="button" data-ind="sma20" class="on">Media 20</button>
-            <button type="button" data-ind="sma50">Media 50</button>
+          <b id="btTitle" class="tvf-title"></b>
+          <div class="tvf-group" role="group" aria-label="Timeframe">
+            <button type="button" data-tf="1m">1m</button><button type="button" data-tf="5m">5m</button>
+            <button type="button" data-tf="15m">15m</button><button type="button" data-tf="1h">1h</button>
+            <button type="button" data-tf="4h">4h</button><button type="button" data-tf="1d">1D</button>
+          </div>
+          <select id="btMode" class="tvx-sel" aria-label="Tipo di grafico">
+            <option value="candle">Candele</option><option value="line">Linea</option>
+          </select>
+          <div class="bt-tools tvf-ind">
+            <button type="button" data-ind="sma20" class="on">MA 20</button>
+            <button type="button" data-ind="sma50">MA 50</button>
             <button type="button" data-ind="ema20">EMA 20</button>
             <button type="button" data-ind="bb">Bollinger</button>
             <button type="button" data-ind="vwap">VWAP</button>
             <button type="button" data-ind="rsi">RSI</button>
             <button type="button" data-ind="vol" class="on">Volumi</button>
           </div>
+          <button class="ghost" type="button" id="btUndo" title="Annulla">↶</button>
+          <button class="ghost" type="button" id="btRedo" title="Ripristina">↷</button>
           <span class="spacer"></span>
-          <select id="btTheme" aria-label="Tema del grafico" class="tvx-sel">
-            <option value="scuro">Tema scuro</option><option value="notte">Tema notte</option><option value="chiaro">Tema chiaro</option>
+          <button class="ghost" type="button" id="btTvToggle" title="Grafico TradingView incorporato">TradingView</button>
+          <a class="ghost" id="btOpenTv" target="_blank" rel="noopener" href="https://www.tradingview.com/">Apri in TradingView</a>
+          <select id="btTheme" class="tvx-sel" aria-label="Tema del grafico">
+            <option value="scuro">Scuro</option><option value="notte">Notte</option><option value="chiaro">Chiaro</option>
           </select>
+          <button class="ghost" type="button" id="btPanelToggle" title="Mostra o nascondi il pannello">Pannello</button>
           <button class="ghost" type="button" id="btFull">Schermo intero</button>
-        </div>
-        <div class="tvx">
-          <div class="bt-tools bt-vtools" role="toolbar" aria-label="Strumenti di disegno">
-            <button type="button" data-tool="cursor" class="on" title="Cursore">Cursore</button>
-            <button type="button" data-tool="hline" title="Linea orizzontale (H)">Linea</button>
-            <button type="button" data-tool="trend" title="Trendline (T)">Trend</button>
+        </header>
+        <div class="tvf-body" id="tvfBody" data-collapsed="0">
+          <nav class="bt-tools tvf-tools" aria-label="Strumenti di disegno">
+            <button type="button" data-tool="cursor" class="on" title="Cursore">↖</button>
+            <button type="button" data-tool="hline" title="Linea orizzontale (H)">―</button>
+            <button type="button" data-tool="trend" title="Trendline (T)">╱</button>
             <button type="button" data-tool="fib" title="Fibonacci (F)">Fib</button>
-            <button type="button" data-tool="measure" title="Misura (M)">Misura</button>
-            <button type="button" id="btClearDraw" title="Pulisci disegni">Pulisci</button>
-          </div>
-          <div class="tvx-center bt-chartwrap" id="btWrap">
+            <button type="button" data-tool="text" title="Testo">T</button>
+            <button type="button" data-tool="measure" title="Misura (M)">⇔</button>
+            <button type="button" disabled title="Pennello: non disponibile in questa versione">✎</button>
+            <button type="button" id="btMagnet" title="Magnetismo: aggancia ai prezzi OHLC">Mag.</button>
+            <button type="button" id="btLock" title="Blocca i disegni">Blocca</button>
+            <button type="button" id="btVis" title="Mostra o nascondi i disegni">Vis.</button>
+            <button type="button" id="btClearDraw" title="Elimina tutti i disegni">Elimina</button>
+          </nav>
+          <section class="tvf-chart bt-chartwrap" id="btWrap">
             <div class="bt-legend" id="btLegend"></div>
             <div class="bt-measure" id="btMeasure"></div>
             <div id="btChart"><div class="empty" style="padding-top:200px">Scegli mercato, data e capitale, poi premi Inizia Nuova Sessione.</div></div>
+            <div id="btTvWrap" class="hidden"><div id="tvEmbed"></div></div>
             <div class="bt-rsi hidden" id="btRsi"></div>
-            <div class="tvx-range">
+            <div class="tvf-nav">
+              <button type="button" id="btZoomOut" title="Riduci zoom">−</button>
+              <button type="button" id="btZoomIn" title="Ingrandisci">+</button>
+              <button type="button" data-range="auto">Auto</button>
               <button type="button" data-range="5y">5y</button><button type="button" data-range="1y">1y</button>
               <button type="button" data-range="6m">6m</button><button type="button" data-range="3m">3m</button>
               <button type="button" data-range="1m">1m</button><button type="button" data-range="5d">5d</button>
-              <button type="button" data-range="1d">1d</button><button type="button" data-range="auto">Auto</button>
+              <button type="button" data-range="1d">1d</button>
             </div>
-          </div>
-          <aside class="tvx-right">
+          </section>
+          <div class="tvf-resizer" id="btResize" title="Trascina per ridimensionare il pannello"></div>
+          <aside class="tvf-panel" id="btPanel">
             <div class="bt-acc">
               <div><span>Balance</span><b id="btBal">—</b></div>
               <div><span>Equity</span><b id="btEq">—</b></div>
@@ -826,29 +889,38 @@ function onBtCross(p){
 function setTool(t){
   TOOL=t;pendingPt=null;
   document.querySelectorAll(".bt-tools [data-tool]").forEach(function(b){b.classList.toggle("on",b.getAttribute("data-tool")===t)});
-  if(t==="hline") $("btMeasure").textContent="Clicca sul grafico per tracciare la linea.";
-  else if(t==="trend"||t==="fib") $("btMeasure").textContent="Clicca il primo punto, poi il secondo.";
-  else if(t==="measure") $("btMeasure").textContent="Clicca il primo punto, poi il secondo per misurare.";
+  var msgs={hline:"Clicca sul grafico per tracciare la linea.",text:"Clicca sul grafico per scrivere il testo.",trend:"Clicca il primo punto, poi il secondo.",fib:"Clicca il primo punto, poi il secondo.",measure:"Clicca il primo punto, poi il secondo per misurare."};
+  if(msgs[t]) $("btMeasure").textContent=msgs[t];
 }
 function onBtClick(p){
   if(!p||!p.point||p.time===undefined||TOOL==="cursor") return;
+  if(lockOn){ $("btMeasure").textContent="Disegni bloccati: sbloccali per modificarli."; return }
   var price=bC.coordinateToPrice(p.point.y);
   if(price==null) return;
+  if(magnetOn){
+    var c=bAll.filter(function(x){return x.t===p.time})[0];
+    if(c){ price=[c.o,c.h,c.l,c.c].reduce(function(a,b){return Math.abs(b-price)<Math.abs(a-price)?b:a}) }
+  }
   var pt={t:p.time,p:price};
-  if(TOOL==="hline"){ dr.push({k:"h",p:price}); saveDr(); renderDr(); setTool("cursor"); return }
+  if(TOOL==="hline"){ addDr({k:"h",p:price}); setTool("cursor"); return }
+  if(TOOL==="text"){
+    var txt=prompt("Testo da mostrare sul grafico:");
+    if(txt&&txt.trim()) addDr({k:"txt",p:price,t:txt.trim().slice(0,60)});
+    setTool("cursor"); return;
+  }
   if(!pendingPt){ pendingPt=pt; $("btMeasure").textContent="Ora clicca il secondo punto."; return }
   var a=pendingPt; pendingPt=null;
   if(a.t===pt.t){ $("btMeasure").textContent="Scegli un punto diverso."; return }
-  if(TOOL==="trend") dr.push({k:"t",a:a,b:pt});
-  if(TOOL==="fib") dr.push({k:"f",a:a,b:pt});
+  if(TOOL==="trend") addDr({k:"t",a:a,b:pt});
+  if(TOOL==="fib") addDr({k:"f",a:a,b:pt});
   if(TOOL==="measure"){
-    dr.push({k:"m",a:a,b:pt});
+    addDr({k:"m",a:a,b:pt});
     var d=pt.p-a.p,pct=d/a.p*100,bars=Math.round(Math.abs(pt.t-a.t)/(TFS[bTf]||3600));
     $("btMeasure").innerHTML='Δ prezzo <b class="'+cls(d)+'">'+(d>0?"+":"")+d.toFixed(dec(a.p)+1)+'</b> · Δ % <b class="'+cls(d)+'">'+(pct>0?"+":"")+pct.toFixed(2)+'%</b> · barre '+bars;
-    saveDr(); renderDr(); TOOL="measure"; setTool("cursor"); return;
   }
-  saveDr(); renderDr(); setTool("cursor");
+  setTool("cursor");
 }
+function addDr(obj){ undoStack.push(JSON.stringify(dr)); redoStack=[]; dr.push(obj); saveDr(); renderDr() }
 function segSeries(a,b,color,style){
   var s=bChart.addLineSeries({color:color,lineWidth:2,lineStyle:style,priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false});
   var pts=a.t<b.t?[a,b]:[b,a];
@@ -858,10 +930,12 @@ function segSeries(a,b,color,style){
 function renderDr(){
   if(!bC) return;
   drH.forEach(function(h){bC.removePriceLine(h)});
-  drS.forEach(function(s){bChart.removeSeries(s)});
+  drS.forEach(function(x){bChart.removeSeries(x)});
   drH=[];drS=[];
+  if(!drVisible) return;
   dr.forEach(function(d){
     if(d.k==="h") drH.push(bC.createPriceLine({price:d.p,color:"#f2b84b",lineWidth:1,lineStyle:0,axisLabelVisible:true,title:""}));
+    if(d.k==="txt") drH.push(bC.createPriceLine({price:d.p,color:"#e7ebf3",lineWidth:1,lineStyle:1,axisLabelVisible:false,title:d.t}));
     if(d.k==="t") segSeries(d.a,d.b,"#f2b84b",0);
     if(d.k==="m") segSeries(d.a,d.b,"#8592a8",2);
     if(d.k==="f"){
@@ -879,9 +953,13 @@ function loadDr(id){
   try{var raw=localStorage.getItem("tdDr:"+id);if(raw)dr=JSON.parse(raw)}catch(e){dr=[]}
 }
 function clearDrawings(){
-  dr=[];saveDr();renderDr();$("btMeasure").textContent="";
+  if(lockOn){ $("btMeasure").textContent="Disegni bloccati: sbloccali per eliminarli."; return }
+  if(dr.length&&!confirm("Eliminare tutti i disegni di questa sessione?")) return;
+  undoStack.push(JSON.stringify(dr)); redoStack=[];
+  dr=[]; saveDr(); renderDr(); $("btMeasure").textContent="";
 }
-
+function undoDr(){ if(!undoStack.length) return; redoStack.push(JSON.stringify(dr)); dr=JSON.parse(undoStack.pop()); saveDr(); renderDr() }
+function redoDr(){ if(!redoStack.length) return; undoStack.push(JSON.stringify(dr)); dr=JSON.parse(redoStack.pop()); saveDr(); renderDr() }
 function renderOrderLines(){
   if(!bC) return;
   bLines.forEach(function(h){bC.removePriceLine(h)});
@@ -900,7 +978,7 @@ function initBtChart(){
   if(bChart) return;
   var el=$("btChart");el.innerHTML="";
   var th=THEMES[localStorage.getItem("tdTheme")||"scuro"]||THEMES.scuro;
-  bChart=LightweightCharts.createChart(el,{width:el.clientWidth,height:460,
+  bChart=LightweightCharts.createChart(el,{width:el.clientWidth,height:el.clientHeight||500,
     layout:{background:{type:"solid",color:th.bg},textColor:th.text},
     grid:{vertLines:{color:th.grid},horzLines:{color:th.grid}},
     timeScale:{timeVisible:true,secondsVisible:false,borderVisible:false},
@@ -911,6 +989,8 @@ function initBtChart(){
   function ln(color,w,style){return bChart.addLineSeries({color:color,lineWidth:w,lineStyle:style||0,priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false})}
   S.sma20=ln("#f2b84b",1);S.sma50=ln("#7aa2f7",1);S.ema20=ln("#e07bd0",1);
   S.bbU=ln("#8592a8",1);S.bbM=ln("#8592a8",1,2);S.bbL=ln("#8592a8",1);S.vwap=ln("#2bd4d4",2);
+  S.line=bChart.addLineSeries({color:"#7aa2f7",lineWidth:2,priceLineVisible:false,lastValueVisible:true,visible:false});
+  new ResizeObserver(fitChart).observe($("btWrap"));
   bChart.subscribeClick(onBtClick);
   bChart.subscribeCrosshairMove(onBtCross);
   bChart.timeScale().subscribeVisibleLogicalRangeChange(function(r){if(rsiChart&&r)rsiChart.timeScale().setVisibleLogicalRange(r)});
@@ -932,6 +1012,9 @@ function makeRsi(){
 function drawBt(){
   var vis=bAll.slice(0,bCur+1);
   bC.setData(vis.map(function(c){return {time:c.t,open:c.o,high:c.h,low:c.l,close:c.c}}));
+  S.line.setData(vis.map(function(c){return {time:c.t,value:c.c}}));
+  bC.applyOptions({visible:chartMode==="candle"});
+  S.line.applyOptions({visible:chartMode==="line"});
   bV.setData(IND.vol?vis.map(function(c){return {time:c.t,value:c.v,color:c.c>=c.o?"rgba(43,176,138,.35)":"rgba(239,90,90,.35)"}}):[]);
   S.sma20.setData(IND.sma20?sma(vis,20):[]);
   S.sma50.setData(IND.sma50?sma(vis,50):[]);
@@ -1138,8 +1221,10 @@ function activate(session,res,cap,bal){
   $("btTitle").textContent=bSym+" · "+(TFL[bTf]||bTf)+" · dal "+dmy(session.date_from||"");
   bPos=null;bOrders=[];
   bAll=res.hist.concat(res.fwd);bCur=res.hist.length;bLoaded=true;
-  loadDr(session.id);
+  loadDr(session.id);undoStack=[];redoStack=[];
   initBtChart();
+  setTfUI();updateTvLink();
+  if(!$("btTvWrap").classList.contains("hidden")) buildTv();
   if(bChart){bC.setData([]);}
   drawBt();updateBt();renderSessions();
 }
@@ -1437,11 +1522,64 @@ $("tradeForm").addEventListener("submit",async function(e){
   ["sym","entry","exit","size","note"].forEach(function(i){$(i).value=""});$("sym").focus();
 });
 
+/* Stato della pagina a tutto schermo */
+var chartMode="candle",magnetOn=false,lockOn=false,drVisible=true,undoStack=[],redoStack=[],panelW=330;
+function fitChart(){
+  if(!bChart) return;
+  var el=$("btChart");
+  if(!el.clientWidth||!el.clientHeight) return;
+  bChart.applyOptions({width:el.clientWidth,height:el.clientHeight});
+}
+function zoomBy(f){
+  if(!bChart) return;
+  var ts=bChart.timeScale(),r=ts.getVisibleLogicalRange();
+  if(!r) return;
+  var mid=(r.from+r.to)/2,half=(r.to-r.from)/2*f;
+  ts.setVisibleLogicalRange({from:mid-half,to:mid+half});
+}
+function setTfUI(){
+  document.querySelectorAll("[data-tf]").forEach(function(b){b.classList.toggle("on",b.getAttribute("data-tf")===bTf)});
+}
+var TVI={"1m":"1","5m":"5","15m":"15","1h":"60","4h":"240","1d":"D"};
+function tvSymbol(s){
+  if(isCrypto(s)) return "BINANCE:"+s;
+  if(s==="XAU/USD") return "OANDA:XAUUSD";
+  if(s==="XAG/USD") return "OANDA:XAGUSD";
+  return "FX:"+s.replace("/","");
+}
+function updateTvLink(){
+  if(!bSym) return;
+  $("btOpenTv").href="https://www.tradingview.com/chart/?symbol="+encodeURIComponent(tvSymbol(bSym))+"&interval="+(TVI[bTf]||"60");
+}
+function loadTvScript(){
+  return new Promise(function(resolve,reject){
+    if(window.TradingView) return resolve();
+    var sc=document.createElement("script");
+    sc.src="https://s3.tradingview.com/tv.js";
+    sc.onload=function(){resolve()};
+    sc.onerror=function(){reject(new Error("TradingView non raggiungibile in questo momento."))};
+    document.head.appendChild(sc);
+  });
+}
+async function buildTv(){
+  if(!bSym) return;
+  $("tvEmbed").innerHTML="";
+  try{
+    await loadTvScript();
+    new TradingView.widget({autosize:true,symbol:tvSymbol(bSym),interval:TVI[bTf]||"60",timezone:"Etc/UTC",
+      theme:$("btTheme").value==="chiaro"?"light":"dark",style:"1",locale:"it",enable_publishing:false,
+      allow_symbol_change:false,container_id:"tvEmbed"});
+  }catch(e){
+    $("tvEmbed").innerHTML='<div class="empty">'+esc(e.message)+'</div>';
+  }
+}
+
 /* Navigazione backtest */
 function showBtView(w){
+  document.body.classList.toggle("bt-focus",w==="session");
   $("btSetupView").classList.toggle("hidden",w!=="setup");
   $("btSessionView").classList.toggle("hidden",w!=="session");
-  if(w==="session"&&bChart) bChart.applyOptions({width:$("btChart").clientWidth});
+  if(w==="session") setTimeout(fitChart,30);
   if(w==="setup") renderSessions();
 }
 function updateSetup(){
@@ -1480,6 +1618,47 @@ $("btSessions").addEventListener("click",function(e){
   renderSessions();
 });
 
+/* Pagina a tutto schermo: controlli */
+document.querySelectorAll("[data-tf]").forEach(function(b){
+  b.addEventListener("click",function(){
+    if(!bSession) return;
+    $("btTf").value=b.getAttribute("data-tf");
+    $("btSym").value=bSym;
+    $("btStart").value=bSession.date_from;
+    $("btCapSlider").value=bCap;
+    startSession();
+  });
+});
+$("btMode").addEventListener("change",function(){ chartMode=this.value; if(bLoaded) drawBt() });
+$("btZoomIn").addEventListener("click",function(){ zoomBy(0.7) });
+$("btZoomOut").addEventListener("click",function(){ zoomBy(1.4) });
+$("btUndo").addEventListener("click",undoDr);
+$("btRedo").addEventListener("click",redoDr);
+$("btMagnet").addEventListener("click",function(){ magnetOn=!magnetOn; this.classList.toggle("on",magnetOn) });
+$("btLock").addEventListener("click",function(){ lockOn=!lockOn; this.classList.toggle("on",lockOn) });
+$("btVis").addEventListener("click",function(){ drVisible=!drVisible; this.classList.toggle("on",!drVisible); renderDr() });
+$("btTvToggle").addEventListener("click",function(){
+  var hidden=$("btTvWrap").classList.contains("hidden");
+  $("btTvWrap").classList.toggle("hidden",!hidden);
+  this.classList.toggle("on",hidden);
+  if(hidden) buildTv();
+  setTimeout(fitChart,30);
+});
+$("btPanelToggle").addEventListener("click",function(){
+  var b=$("tvfBody"),collapsed=b.getAttribute("data-collapsed")==="1";
+  b.setAttribute("data-collapsed",collapsed?"0":"1");
+  setTimeout(fitChart,30);
+});
+var resizeDrag=null;
+$("btResize").addEventListener("pointerdown",function(e){ resizeDrag={x:e.clientX,w:panelW}; this.setPointerCapture(e.pointerId) });
+$("btResize").addEventListener("pointermove",function(e){
+  if(!resizeDrag) return;
+  panelW=Math.max(260,Math.min(560,resizeDrag.w-(e.clientX-resizeDrag.x)));
+  $("tvfBody").style.setProperty("--panelW",panelW+"px");
+  fitChart();
+});
+$("btResize").addEventListener("pointerup",function(){ resizeDrag=null });
+
 /* Backtest: strumenti */
 $("btStartBtn").addEventListener("click",startSession);
 document.querySelectorAll(".bt-tools [data-tool]").forEach(function(b){
@@ -1496,10 +1675,10 @@ $("btTheme").value=localStorage.getItem("tdTheme")||"scuro";
 $("btTheme").addEventListener("change",function(){applyTheme($("btTheme").value)});
 $("btFull").addEventListener("click",function(){
   if(document.fullscreenElement) document.exitFullscreen();
-  else if($("btWrap")&&$("btWrap").requestFullscreen) $("btWrap").requestFullscreen();
+  else if($("btSessionView").requestFullscreen) $("btSessionView").requestFullscreen();
 });
 document.addEventListener("fullscreenchange",function(){
-  if(bChart) bChart.applyOptions({height:document.fullscreenElement?window.innerHeight-200:460});
+  setTimeout(fitChart,50);
 });
 $("btType").addEventListener("change",function(){updateBt()});
 $("btBuy").addEventListener("click",function(){bSubmit("long")});
