@@ -814,6 +814,23 @@ th:last-child,td:last-child{padding-right:14px}
 .cal-tile b{font-size:20px}
 .cal-tile small{font-size:11.5px}
 @media (max-width:720px){.cal-tile{min-height:0}}
+
+/* Community */
+.cm-layout{display:grid;grid-template-columns:minmax(300px,380px) minmax(0,1fr);gap:20px;align-items:start}
+.cm-form{display:grid;gap:12px}
+.cm-post{padding:18px 0;border-bottom:1px solid var(--line)}
+.cm-post:last-child{border-bottom:0}
+.cm-post header{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px}
+.cm-room{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 40%,transparent);border-radius:999px;padding:3px 10px}
+.cm-date{font-size:12px;color:var(--mute)}
+.cm-post h3{font-size:18px;margin:4px 0 2px}
+.cm-author{font-size:13px;color:var(--mute);margin:0 0 8px}
+.cm-body{white-space:pre-wrap;word-break:break-word;margin:0 0 10px;font-size:15px}
+.cm-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.cm-tags span{font-size:12px;color:var(--mute);background:color-mix(in srgb,var(--line) 40%,transparent);border-radius:999px;padding:3px 10px}
+.cm-post footer{display:flex;gap:8px}
+.cm-post footer button{font-size:12px;padding:5px 12px}
+@media (max-width:1000px){.cm-layout{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -843,6 +860,7 @@ th:last-child,td:last-child{padding-right:14px}
       <button type="button" data-view="calendario">Calendario</button>
       <button type="button" data-view="operazioni">Operazioni</button>
       <button type="button" data-view="backtest" id="navBacktest" class="hidden">Backtest</button>
+      <button type="button" data-view="community">Community</button>
       <button type="button" data-view="trova" class="hidden">Trova trader</button>
       <button type="button" data-view="leaderboard" class="hidden">Leaderboard</button>
       <button type="button" data-view="impostazioni" class="hidden">Impostazioni e account</button>
@@ -928,6 +946,31 @@ th:last-child,td:last-child{padding-right:14px}
       <div class="op-col">
       <section class="panel"><h2>Tutte le operazioni reali</h2><div class="tablewrap" id="opList"></div></section>
       </div>
+      </div>
+    </section>
+
+    <section id="v-community" class="view hidden">
+      <h1>Community</h1>
+      <p class="sub">Condividi strategie e setup con altri trader. Non vengono pubblicati trade o dati del tuo conto, a meno che tu non lo scriva.</p>
+      <div class="lb-tabs" id="cmRooms">
+        <button type="button" data-room="strategie" class="on">Stanza Strategie</button>
+        <button type="button" data-room="setup">Stanza Setup</button>
+      </div>
+      <div class="cm-layout" style="margin-top:18px">
+        <section class="panel">
+          <h2>Pubblica nella stanza</h2>
+          <form id="cmForm" autocomplete="off" class="cm-form">
+            <label>Titolo<input id="cmTitle" maxlength="120" placeholder="Es. Breakout dopo il range di Londra"></label>
+            <label>Descrizione<textarea id="cmBody" rows="6" maxlength="3000" placeholder="Regole, contesto, timeframe, come gestisci il rischio. Niente consigli di investimento garantiti."></textarea></label>
+            <label>Tag (separati da virgola)<input id="cmTags" maxlength="120" placeholder="es. forex, breakout, swing"></label>
+            <div class="msg" id="cmMsg" role="alert"></div>
+            <button class="btn" type="submit" id="cmSend">Pubblica</button>
+          </form>
+        </section>
+        <section class="panel">
+          <h2 id="cmListTitle">Strategie</h2>
+          <div id="cmList"></div>
+        </section>
       </div>
     </section>
 
@@ -2310,6 +2353,7 @@ function renderCurrent(){
   if(view==="privacy") renderPrivacy();
   if(view==="supporto") renderMyFeedback();
   if(view==="admin") renderAdmin();
+  if(view==="community") renderCommunity();
   if(view==="leaderboard") loadLeaderboard();
 }
 function setView(v){
@@ -3293,6 +3337,74 @@ $("admList").addEventListener("click",async function(e){
   b.disabled=false;
   if(r.error){ alert("Salvataggio non riuscito: "+r.error.message); return }
   renderAdmin();
+});
+
+/* Community: stanze Strategie e Setup */
+var cmRoom="strategie";
+function cmLabel(r){ return r==="setup"?"Setup":"Strategie" }
+function cmTagsFrom(txt){
+  return txt.split(",").map(function(t){return t.trim().toLowerCase().replace(/[^a-z0-9àèéìòù_\- ]/gi,"").slice(0,24)})
+    .filter(function(t,i,a){return t&&a.indexOf(t)===i}).slice(0,5);
+}
+async function renderCommunity(){
+  $("cmListTitle").textContent="Stanza "+cmLabel(cmRoom);
+  document.querySelectorAll("#cmRooms [data-room]").forEach(function(b){b.classList.toggle("on",b.getAttribute("data-room")===cmRoom)});
+  $("cmList").innerHTML='<p class="muted">Carico i post…</p>';
+  if(!sb) return;
+  var r=await sb.from("community_posts").select("*").eq("room",cmRoom).order("created_at",{ascending:false}).limit(50);
+  if(r.error){ $("cmList").innerHTML='<p class="muted">Non riesco a caricare la stanza: '+esc(r.error.message)+'</p>'; return }
+  if(!r.data.length){ $("cmList").innerHTML='<div class="g-empty">Nessun post ancora in questa stanza. Sii il primo a pubblicare.</div>'; return }
+  $("cmList").innerHTML=r.data.map(function(p){
+    var mine=user&&p.user_id===user.id;
+    var admin=isAdmin();
+    return '<article class="cm-post" data-id="'+esc(p.id)+'">'+
+      '<header><span class="cm-room">'+cmLabel(p.room)+'</span><span class="cm-date">'+esc(dmy(p.created_at.slice(0,10)))+'</span></header>'+
+      '<h3>'+esc(p.title)+'</h3>'+
+      '<p class="cm-author">di '+esc(p.author_name||"utente")+'</p>'+
+      '<p class="cm-body">'+esc(p.body)+'</p>'+
+      (p.tags&&p.tags.length?'<div class="cm-tags">'+p.tags.map(function(t){return '<span>#'+esc(t)+'</span>'}).join("")+'</div>':'')+
+      '<footer>'+
+        (mine||admin?'<button class="ghost" type="button" data-cmdel="'+esc(p.id)+'">Elimina</button>':'')+
+        (!mine?'<button class="ghost" type="button" data-cmrep="'+esc(p.id)+'">Segnala</button>':'')+
+      '</footer></article>';
+  }).join("");
+}
+$("cmRooms").addEventListener("click",function(e){
+  var b=e.target.closest("[data-room]");
+  if(!b) return;
+  cmRoom=b.getAttribute("data-room");
+  renderCommunity();
+});
+$("cmForm").addEventListener("submit",async function(e){
+  e.preventDefault();
+  $("cmMsg").classList.remove("ok");$("cmMsg").textContent="";
+  var title=$("cmTitle").value.trim(),body=$("cmBody").value.trim();
+  if(title.length<3){ $("cmMsg").textContent="Il titolo deve avere almeno 3 caratteri."; return }
+  if(body.length<10){ $("cmMsg").textContent="La descrizione deve avere almeno 10 caratteri."; return }
+  $("cmSend").disabled=true;
+  var r=await sb.from("community_posts").insert({user_id:user.id,author_name:displayName().slice(0,60),room:cmRoom,
+    title:title,body:body,tags:cmTagsFrom($("cmTags").value)}).select().single();
+  $("cmSend").disabled=false;
+  if(r.error){ $("cmMsg").textContent="Pubblicazione non riuscita: "+r.error.message; return }
+  $("cmTitle").value="";$("cmBody").value="";$("cmTags").value="";
+  $("cmMsg").classList.add("ok");$("cmMsg").textContent="Post pubblicato.";
+  renderCommunity();
+});
+$("cmList").addEventListener("click",async function(e){
+  var d=e.target.closest("[data-cmdel]"),g=e.target.closest("[data-cmrep]");
+  if(d){
+    if(!confirm("Eliminare questo post?")) return;
+    var r=await sb.from("community_posts").delete().eq("id",d.getAttribute("data-cmdel"));
+    if(r.error){ alert("Eliminazione non riuscita: "+r.error.message); return }
+    renderCommunity(); return;
+  }
+  if(g){
+    var reason=prompt("Perché segnali questo post? (almeno 10 caratteri)");
+    if(!reason||reason.trim().length<10){ if(reason!==null) alert("Scrivi almeno 10 caratteri."); return }
+    var rr=await sb.from("feedback").insert({user_id:user.id,contact_email:user.email||"",category:"problema",
+      message:"Segnalazione post community "+g.getAttribute("data-cmrep")+": "+reason.trim(),page:"community"});
+    alert(rr.error?"Segnalazione non riuscita: "+rr.error.message:"Grazie, la segnalazione è arrivata al team.");
+  }
 });
 
 /* Avvio */
