@@ -105,6 +105,9 @@ td.note{white-space:normal;color:var(--mute);max-width:200px}
 .mini td.n,.mini th.n{text-align:right}
 .sess tr:hover td{background:var(--bg)}
 .sess button{padding:4px 8px;font-size:12px}
+.rank-head{display:flex;gap:14px;align-items:center}
+.rank-card .big{margin-top:0}
+.rank-meta{font-size:13px;color:var(--mute);margin:10px 0 0}
 input[type=range]{padding:0;border:0;background:transparent;accent-color:var(--gain);width:100%}
 .bt-setup-grid{display:grid;grid-template-columns:1fr 1.2fr;gap:18px;align-items:start}
 .cap-wrap{position:relative;margin:26px 0 22px}
@@ -324,6 +327,15 @@ input[type=range]{padding:0;border:0;background:transparent;accent-color:var(--g
         <p style="color:var(--mute);margin-top:8px">Criptovalute, forex e oro sono già inclusi: non serve nessuna chiave.</p>
       </section>
       <section class="panel">
+        <h2>Profilo trader</h2>
+        <form id="profForm" autocomplete="off">
+          <label>Nome utente (3-20 caratteri: lettere minuscole, numeri, _)<input id="profUser" maxlength="20" required></label>
+          <label>Capitale iniziale del conto (USD)<input type="number" id="profCap" min="1" step="100" required></label>
+          <div class="msg" id="profMsg" role="alert"></div>
+          <div><button class="btn" type="submit" id="profBtn">Salva profilo</button></div>
+        </form>
+      </section>
+      <section class="panel">
         <h2>Cambia password</h2>
         <form id="pwForm">
           <label>Nuova password (minimo 8 caratteri)<input type="password" id="newPw" minlength="8" required autocomplete="new-password"></label>
@@ -355,6 +367,7 @@ var sb=ready?supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY):null;
 
 /* Stato generale */
 var trades=[],btTrades=[],backtests=[],user=null,view="dashboard",calMonth=new Date(),calSel=null,authMode="login",btErr=false;
+var profile=null,rankData=null;
 var BIN="https://api.binance.com/api/v3/klines";
 var TDTF={"1m":"1min","5m":"5min","15m":"15min","1h":"1h","4h":"4h","1d":"1day"};
 var TFL={"1m":"1m","5m":"5m","15m":"15m","1h":"1h","4h":"4h","1d":"1D"};
@@ -493,7 +506,7 @@ function renderDashboard(){
     '<h1>Ciao, '+esc(name)+'</h1><p class="sub">Il tuo riepilogo di oggi, '+dmy(to)+'</p>'+
     '<div class="hero">'+
       '<section class="panel"><span class="lab">Streak attuale</span><div class="big">'+streak+' giorni</div><p class="sub" style="margin:6px 0 0">Record: '+record+' giorni di fila con almeno un trade</p></section>'+
-      '<section class="panel"><span class="lab">Livello '+lvl+'</span><div class="big">'+xp+' XP</div><div class="xpbar"><i style="width:'+(into/200*100).toFixed(0)+'%"></i></div><p class="sub" style="margin:6px 0 0">'+into+' / 200 al prossimo livello</p></section>'+
+      rankCardHTML()+
       '<section class="panel"><span class="lab">Sessioni di backtest</span><div class="big">'+backtests.length+'</div><p class="sub" style="margin:6px 0 0">'+btTrades.length+' operazioni simulate in totale</p></section>'+
     '</div>'+
     '<div class="grid2">'+
@@ -933,8 +946,59 @@ async function openSession(id){
 function stopAll(){bStop();}
 function renderBacktest(){updateBt();renderSessions()}
 
+/* Profilo e rank */
+function rankEmblem(color,name){
+  var letter=(name||"?").charAt(0);
+  return '<svg viewBox="0 0 48 56" width="46" height="52" role="img" aria-label="Rank '+esc(name)+'">'+
+    '<path d="M24 2 L44 10 V28 C44 40 36 49 24 54 C12 49 4 40 4 28 V10 Z" fill="'+esc(color)+'" stroke="var(--ink)" stroke-width="1.5"/>'+
+    '<text x="24" y="34" text-anchor="middle" font-size="18" font-weight="700" fill="#1a1d21">'+esc(letter)+'</text></svg>';
+}
+function rankCardHTML(){
+  if(!rankData) return '<section class="panel rank-card"><span class="lab">Rank</span><div class="big">—</div><p class="rank-meta">Caricamento del rank…</p></section>';
+  var r=rankData,base=r.rank_min,span=(r.next_points||base)-base;
+  var prog=r.next_rank&&span>0?Math.min(100,Math.max(0,(r.points-base)/span*100)):100;
+  var next=r.next_rank
+    ?'Prossimo rank: '+esc(r.next_rank)+' a '+r.next_points+' punti'+(r.next_min_days?' e '+r.next_min_days+' giorni validi':'')+'. Mancano '+(r.next_points-r.points)+' punti.'
+    :'Hai raggiunto il rank più alto.';
+  var b=r.breakdown||{};
+  var brk='Giornate positive +'+(b.giornate_positive||0)+' · Serie +'+(b.serie_positiva||0)+' · Rendimento +'+(b.rendimento||0)+' · Costanza +'+(b.costanza_settimanale||0)+(b.penalita_drawdown?' · Drawdown '+b.penalita_drawdown:'');
+  return '<section class="panel rank-card"><div class="rank-head">'+rankEmblem(r.color,r.rank)+
+    '<div><span class="lab">Rank</span><div class="big" style="color:'+esc(r.color)+'">'+esc(r.rank)+'</div></div></div>'+
+    '<p class="rank-meta">Trading Rating: <b style="color:var(--ink)">'+r.points+' punti</b> · '+r.valid_days+' giorni validi</p>'+
+    '<div class="xpbar"><i style="width:'+prog.toFixed(0)+'%;background:'+esc(r.color)+'"></i></div>'+
+    '<p class="rank-meta">'+next+'</p><p class="rank-meta" style="font-size:12px">'+brk+'</p></section>';
+}
+async function loadProfile(){
+  var r=await sb.from("profiles").select("*").eq("user_id",user.id).maybeSingle();
+  profile=r.error?null:(r.data||null);
+}
+async function refreshRank(){
+  if(!user) return;
+  var r=await sb.rpc("my_rank");
+  rankData=r.error?null:r.data;
+  if(view==="dashboard") renderDashboard();
+}
+async function saveProfile(e){
+  e.preventDefault();
+  var u=$("profUser").value.trim().toLowerCase(),cap=parseFloat($("profCap").value);
+  $("profMsg").textContent="";$("profMsg").classList.remove("ok");
+  if(!/^[a-z0-9_]{3,20}$/.test(u)){$("profMsg").textContent="Il nome utente deve avere 3-20 caratteri: lettere minuscole, numeri o _.";return}
+  if(!(cap>0)){$("profMsg").textContent="Inserisci un capitale iniziale valido.";return}
+  $("profBtn").disabled=true;
+  var r=await sb.from("profiles").upsert({user_id:user.id,username:u,starting_capital:cap},{onConflict:"user_id"}).select().single();
+  $("profBtn").disabled=false;
+  if(r.error){$("profMsg").textContent=r.error.code==="23505"?"Nome utente già usato, scegline un altro.":"Salvataggio non riuscito: "+r.error.message;return}
+  profile=r.data;
+  $("profMsg").classList.add("ok");$("profMsg").textContent="Profilo salvato.";
+  refreshRank();
+}
+
 /* Render generale */
-function renderImpostazioni(){ $("acctEmail").textContent=user?user.email:"" }
+function renderImpostazioni(){
+  $("acctEmail").textContent=user?user.email:"";
+  $("profUser").value=profile?profile.username||"":"";
+  $("profCap").value=profile?profile.starting_capital:10000;
+}
 function renderCurrent(){
   if(view==="dashboard") renderDashboard();
   if(view==="oggi") renderOggi();
@@ -959,6 +1023,8 @@ async function loadAll(){
   btTrades=all.filter(function(x){return !!x.backtest_id});
   var b=await sb.from("backtests").select("*").order("created_at",{ascending:false});
   btErr=!!b.error;backtests=b.error?[]:(b.data||[]);
+  await loadProfile();
+  await refreshRank();
   renderCurrent();
 }
 function enterApp(u){
@@ -1005,7 +1071,7 @@ $("main").addEventListener("click",async function(e){
     var id=del.getAttribute("data-del");
     var r=await sb.from("trades").delete().eq("id",id);
     if(r.error){alert("Eliminazione non riuscita: "+r.error.message);return}
-    trades=trades.filter(function(t){return t.id!==id});btTrades=btTrades.filter(function(t){return t.id!==id});renderCurrent();return;
+    trades=trades.filter(function(t){return t.id!==id});btTrades=btTrades.filter(function(t){return t.id!==id});renderCurrent();refreshRank();return;
   }
   if(delbt){
     if(!confirm("Eliminare la sessione e tutte le sue operazioni?")) return;
@@ -1037,7 +1103,7 @@ $("tradeForm").addEventListener("submit",async function(e){
   var r=await sb.from("trades").insert(row).select().single();
   $("saveBtn").disabled=false;
   if(r.error){$("tradeMsg").textContent="Salvataggio non riuscito: "+r.error.message;return}
-  trades.push(r.data);renderCurrent();
+  trades.push(r.data);renderCurrent();refreshRank();
   ["sym","entry","exit","size","note"].forEach(function(i){$(i).value=""});$("sym").focus();
 });
 
@@ -1120,6 +1186,7 @@ document.addEventListener("keydown",function(e){
 });
 
 /* Impostazioni */
+$("profForm").addEventListener("submit",saveProfile);
 $("pwForm").addEventListener("submit",async function(e){
   e.preventDefault();
   $("pwBtn").disabled=true;$("pwMsg").textContent="";$("pwMsg").classList.remove("ok");
