@@ -130,6 +130,44 @@ td.note{white-space:normal;color:var(--mute);max-width:200px}
 .lb-rank svg{width:20px;height:24px}
 .lb-msg{padding:28px 8px;text-align:center;color:var(--mute)}
 .lb-search{max-width:280px}
+.set-head h2{margin:0 0 4px}
+.muted{color:var(--mute);font-size:14px;margin:0}
+.switches{display:grid;gap:10px;margin:6px 0 18px}
+.switch{position:relative;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 16px;border:1px solid var(--line);border-radius:18px;background:var(--bg);cursor:pointer;transition:border-color .2s ease,background .2s ease}
+.switch:hover{border-color:var(--accent)}
+.switch input,.stat-chip input{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px}
+.switch b{display:block;font-weight:700}
+.switch small{display:block;color:var(--mute);font-size:13px;margin-top:2px}
+.track{width:48px;height:28px;border-radius:999px;background:var(--line);position:relative;flex:none;transition:background .2s ease}
+.track::after{content:"";position:absolute;top:4px;left:4px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.2);transition:transform .2s ease}
+.switch input:checked+.track{background:var(--accent)}
+.switch input:checked+.track::after{transform:translateX(20px)}
+.switch input:focus-visible+.track{outline:2px solid var(--ink);outline-offset:2px}
+.grp-title{font:700 16px var(--font-title);margin:18px 0 10px}
+.chipgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.stat-chip{position:relative;display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:999px;border:1px solid var(--line);background:var(--bg);cursor:pointer;font-size:14px;transition:border-color .2s ease,background .2s ease}
+.stat-chip:hover{border-color:var(--accent)}
+.stat-chip .dot{width:20px;height:20px;border-radius:50%;border:2px solid var(--mute);display:grid;place-items:center;flex:none;transition:all .2s ease}
+.stat-chip .dot::after{content:"";width:8px;height:8px;border-radius:50%;background:transparent;transition:background .2s ease}
+.stat-chip input:checked~.dot{background:var(--accent);border-color:var(--accent)}
+.stat-chip input:checked~.dot::after{background:var(--accent-ink)}
+.stat-chip:has(input:checked){border-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,var(--bg))}
+.stat-chip input:focus-visible~.dot{outline:2px solid var(--ink);outline-offset:2px}
+.adv{margin-top:18px;border:1px solid var(--line);border-radius:18px;padding:12px 16px;background:var(--bg)}
+.adv summary{cursor:pointer;font-weight:700;color:var(--ink)}
+.adv[open] summary{margin-bottom:10px}
+.linkbox{display:flex;gap:8px;align-items:center;padding:6px 6px 6px 16px;border-radius:999px;border:1px solid var(--line);background:var(--bg);margin-top:18px}
+.linkbox input{border:0;background:transparent;box-shadow:none;padding:6px 0}
+.trova-search{position:relative;margin:6px 0 18px}
+.trova-search input{width:100%;padding:16px 22px 16px 52px;font-size:17px;border-radius:999px;border:1px solid var(--line);background:var(--panel)}
+.trova-search::before{content:"⌕";position:absolute;left:20px;top:50%;transform:translateY(-52%);font-size:22px;color:var(--mute)}
+.trader-row{display:flex;align-items:center;gap:16px;padding:14px 18px;border:1px solid var(--line);border-radius:20px;background:var(--panel);margin-bottom:10px;text-decoration:none;color:var(--ink);transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
+.trader-row:hover{transform:translateY(-2px);border-color:var(--accent);box-shadow:0 10px 24px -16px rgba(0,0,0,.3)}
+.trader-row .av{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-weight:700;color:#1a1d21;flex:none}
+.trader-row .nm{flex:1;min-width:0}
+.trader-row .nm b{display:block;font-size:16px}
+.trader-row .nm small{color:var(--mute);font-size:13px}
+.trader-row .go{font-size:13px;color:var(--accent);font-weight:700;white-space:nowrap}
 input[type=range]{padding:0;border:0;background:transparent;accent-color:var(--gain);width:100%}
 .bt-setup-grid{display:grid;grid-template-columns:1fr 1.2fr;gap:18px;align-items:start}
 .cap-wrap{position:relative;margin:26px 0 22px}
@@ -215,6 +253,7 @@ table th{font-weight:600}
       <button type="button" data-view="calendario">Calendario</button>
       <button type="button" data-view="operazioni">Operazioni</button>
       <button type="button" data-view="backtest">Backtest</button>
+      <button type="button" data-view="trova">Trova trader</button>
       <button type="button" data-view="leaderboard">Leaderboard</button>
       <button type="button" data-view="impostazioni">Impostazioni e account</button>
     </nav>
@@ -378,6 +417,12 @@ table th{font-weight:600}
       </div>
     </section>
 
+    <section id="v-trova" class="view hidden">
+      <h1>Trova trader</h1>
+      <p class="sub">Cerca un trader per nome utente e apri il suo profilo pubblico.</p>
+      <div class="trova-search"><input id="trovaInput" placeholder="Scrivi il nome utente, es. dan" autocomplete="off" aria-label="Cerca trader"></div>
+      <div id="trovaRes"></div>
+    </section>
     <section id="v-leaderboard" class="view hidden">
       <h1>Leaderboard</h1>
       <p class="sub">Compete. Improve. Dominate.</p>
@@ -412,14 +457,23 @@ table th{font-weight:600}
         <p style="color:var(--mute);margin-top:8px">Criptovalute, forex e oro sono già inclusi: non serve nessuna chiave.</p>
       </section>
       <section class="panel">
-        <h2>Profilo trader</h2>
-        <form id="profForm" autocomplete="off">
-          <label>Nome utente (3-20 caratteri: lettere minuscole, numeri, _)<input id="profUser" maxlength="20" required></label>
-          <label>Capitale iniziale del conto (USD)<input type="number" id="profCap" min="1" step="100" required></label>
-          <label style="display:flex;gap:10px;align-items:center;font-size:14px;color:var(--ink)"><input type="checkbox" id="profInLb" style="width:auto"> Mostra il mio profilo nella Leaderboard (solo nome utente e statistiche aggregate)</label>
-<label style="display:flex;gap:10px;align-items:center;font-size:14px;color:var(--ink)"><input type="checkbox" id="profPublic" style="width:auto"> Profilo pubblico (visibile a chiunque abbia il link)</label><div style="margin:10px 0 4px;font-size:13px;color:var(--mute)">Cosa mostrare nel profilo pubblico</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px 16px"><label style="display:flex;gap:10px;align-items:center;font-size:14px;color:var(--ink)"><input type="checkbox" id="pp_rank" style="width:auto"> Rank e rating</label><label style="display:flex;gap:10px;align-items:center;font-size:14px;color:var(--ink)"><input type="checkbox" id="pp_return" style="width:auto"> Rendimento %</label><label style="display:flex;gap:10px;align-items:center;font-size:14px;color:var(--ink)"><input type="checkbox" id="pp_win" style="width:auto"> Win rate</label><label style="display:flex;gap:10px;align-items:center;font-size:14px;color:var(--ink)"><input type="checkbox" id="pp_pf" style="width:auto"> Profit factor</label><label style="display:flex;gap:10px;align-items:center;font-size:14px;color:var(--ink)"><input type="checkbox" id="pp_dd" style="width:auto"> Drawdown massimo</label><label style="display:flex;gap:10px;align-items:center;font-size:14px;color:var(--ink)"><input type="checkbox" id="pp_trades" style="width:auto"> Numero di trade</label><label style="display:flex;gap:10px;align-items:center;font-size:14px;color:var(--ink)"><input type="checkbox" id="pp_streak" style="width:auto"> Giorni positivi e serie</label><label style="display:flex;gap:10px;align-items:center;font-size:14px;color:var(--ink)"><input type="checkbox" id="pp_equity" style="width:auto"> Grafico equity curve</label><label style="display:flex;gap:10px;align-items:center;font-size:14px;color:var(--ink)"><input type="checkbox" id="pp_history" style="width:auto"> Storico mensile</label><label style="display:flex;gap:10px;align-items:center;font-size:14px;color:var(--ink)"><input type="checkbox" id="pp_markets" style="width:auto"> Mercati negoziati</label><label style="display:flex;gap:10px;align-items:center;font-size:14px;color:var(--ink)"><input type="checkbox" id="pp_position" style="width:auto"> Posizione in classifica</label><label style="display:flex;gap:10px;align-items:center;font-size:14px;color:var(--ink)"><input type="checkbox" id="pp_net" style="width:auto"> Importo netto in valuta (nascosto di default)</label><label style="display:flex;gap:10px;align-items:center;font-size:14px;color:var(--ink)"><input type="checkbox" id="pp_detail" style="width:auto"> Dettaglio dei singoli trade (nascosto di default)</label></div><label style="margin-top:10px">Link del profilo<div style="display:flex;gap:8px"><input id="profLink" readonly><button class="ghost" type="button" id="profCopy">Copia</button></div></label>
-          <div class="msg" id="profMsg" role="alert"></div>
-          <div><button class="btn" type="submit" id="profBtn">Salva profilo</button></div>
+        <div class="set-head"><h2>Profilo trader</h2><p class="muted">Il tuo nome pubblico e cosa mostrare agli altri trader.</p></div>
+        <form id="profForm" autocomplete="off" style="margin-top:16px">
+          <label>Nome utente<input id="profUser" maxlength="20" required placeholder="es. dan_trader"></label>
+          <div class="switches">
+            <label class="switch"><div><b>Mostra nella Leaderboard</b><small>Compari in classifica con nome utente e statistiche aggregate</small></div><input type="checkbox" id="profInLb"><span class="track"></span></label>
+            <label class="switch"><div><b>Profilo pubblico</b><small>Chiunque abbia il link può vedere il tuo profilo e trovarlo nella ricerca</small></div><input type="checkbox" id="profPublic"><span class="track"></span></label>
+          </div>
+          <div class="grp-title">Cosa mostrare nel profilo</div>
+          <div class="chipgrid"><label class="stat-chip"><input type="checkbox" id="pp_rank"><span class="dot"></span><span>Rank e rating</span></label><label class="stat-chip"><input type="checkbox" id="pp_return"><span class="dot"></span><span>Rendimento %</span></label><label class="stat-chip"><input type="checkbox" id="pp_win"><span class="dot"></span><span>Win rate</span></label><label class="stat-chip"><input type="checkbox" id="pp_pf"><span class="dot"></span><span>Profit factor</span></label><label class="stat-chip"><input type="checkbox" id="pp_dd"><span class="dot"></span><span>Drawdown massimo</span></label><label class="stat-chip"><input type="checkbox" id="pp_trades"><span class="dot"></span><span>Numero di trade</span></label><label class="stat-chip"><input type="checkbox" id="pp_streak"><span class="dot"></span><span>Giorni positivi e serie</span></label><label class="stat-chip"><input type="checkbox" id="pp_equity"><span class="dot"></span><span>Equity curve</span></label><label class="stat-chip"><input type="checkbox" id="pp_history"><span class="dot"></span><span>Storico mensile</span></label><label class="stat-chip"><input type="checkbox" id="pp_markets"><span class="dot"></span><span>Mercati negoziati</span></label><label class="stat-chip"><input type="checkbox" id="pp_position"><span class="dot"></span><span>Posizione in classifica</span></label><label class="stat-chip"><input type="checkbox" id="pp_net"><span class="dot"></span><span>Importo netto in valuta</span></label><label class="stat-chip"><input type="checkbox" id="pp_detail"><span class="dot"></span><span>Dettaglio dei trade</span></label></div>
+          <details class="adv">
+            <summary>Impostazioni avanzate</summary>
+            <label>Capitale di riferimento (USD)<input type="number" id="profCap" min="1" step="100" value="10000"></label>
+            <p class="muted" style="margin-top:8px">Serve solo a calcolare il rendimento in percentuale. Se non lo cambi, si usa 10.000 USD.</p>
+          </details>
+          <div class="linkbox"><input id="profLink" readonly aria-label="Link del profilo"><button class="ghost" type="button" id="profCopy">Copia link</button></div>
+          <div class="msg" id="profMsg" role="alert" style="margin-top:12px"></div>
+          <div style="margin-top:14px"><button class="btn" type="submit" id="profBtn">Salva profilo</button></div>
         </form>
       </section>
             <section class="panel">
@@ -1043,6 +1097,31 @@ async function openSession(id){
 }
 function stopAll(){bStop();}
 function renderBacktest(){updateBt();renderSessions()}
+
+/* Trova trader */
+var trovaTimer=null;
+function renderTrovaHint(t){ $("trovaRes").innerHTML='<div class="empty">'+t+'</div>' }
+async function runTrova(){
+  var q=$("trovaInput").value.trim();
+  if(q.length<2){ renderTrovaHint("Scrivi almeno 2 caratteri del nome utente."); return }
+  $("trovaRes").innerHTML='<div class="empty">Cerco…</div>';
+  var r=await sb.rpc("search_traders",{p_query:q});
+  if(r.error){ $("trovaRes").innerHTML='<div class="empty" style="color:var(--loss)">Ricerca non disponibile: '+esc(r.error.message)+'</div>'; return }
+  var rows=r.data||[];
+  if(!rows.length){ renderTrovaHint("Nessun trader pubblico trovato con questo nome."); return }
+  $("trovaRes").innerHTML=rows.map(function(t){
+    var col=t.rank_color||"#b87333";
+    return '<a class="trader-row" href="profile.html?u='+encodeURIComponent(t.username)+'">'+
+      '<span class="av" style="background:'+esc(col)+'">'+esc(t.username.charAt(0).toUpperCase())+'</span>'+
+      '<span class="nm"><b>'+esc(t.username)+'</b><small>'+esc(t.rank_name||"Bronze")+' · Rating '+(t.points||0)+'</small></span>'+
+      '<span class="go">Apri profilo →</span></a>';
+  }).join("");
+}
+$("trovaInput").addEventListener("input",function(){
+  clearTimeout(trovaTimer);
+  trovaTimer=setTimeout(runTrova,300);
+});
+renderTrovaHint("Scrivi il nome utente di un trader per trovarlo.");
 
 /* Profilo pubblico */
 var PRIV_KEYS=["rank","return","win","pf","dd","trades","streak","equity","history","markets","position","net","detail"];
