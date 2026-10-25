@@ -362,6 +362,8 @@ body.bt-focus main{padding:0!important;max-width:none!important;height:100vh;ove
 }
 :root[data-theme="light"]{--bg:#f4f1ea;--side:#ebe7dd;--panel:#fbfaf6;--ink:#1a1d21;--mute:#5c6168;--line:#d9d4c7;--gain:#1d7a4f;--loss:#b03a3a;--accent:#1f4d3a;--accent-ink:#f4f1ea;color-scheme:light}
 :root[data-theme="dark"]{--bg:#121416;--side:#0d0f11;--panel:#1a1e21;--ink:#ecebe6;--mute:#9a9da2;--line:#2b2f33;--gain:#7fd1ae;--loss:#ff8a8a;--accent:#7fd1ae;--accent-ink:#121416;color-scheme:dark}
+
+.imp-summary{margin:12px 0}
 </style>
 </head>
 <body>
@@ -445,6 +447,29 @@ body.bt-focus main{padding:0!important;max-width:none!important;height:100vh;ove
         <div class="msg" id="tradeMsg" role="alert"></div>
         <div><button class="btn" type="submit" id="saveBtn">Salva operazione</button></div>
       </form>
+      <section class="panel" id="impPanel">
+        <h2>Importa report</h2>
+        <p class="muted" style="margin-bottom:12px">Esporta lo storico dalla piattaforma in formato CSV e caricalo qui. Le operazioni già presenti non vengono duplicate. Non serve nessuna password.</p>
+        <div class="row">
+          <label>Piattaforma
+            <select id="impPlat"><option>MetaTrader 4</option><option>MetaTrader 5</option><option>cTrader</option><option>Altra (CSV)</option></select>
+          </label>
+          <label>Moltiplicatore del lotto
+            <input type="number" id="impMult" value="1" min="0.0001" step="any">
+          </label>
+        </div>
+        <label style="margin-top:10px">File CSV (massimo 5 MB)
+          <input type="file" id="impFile" accept=".csv,text/csv">
+        </label>
+        <p class="muted" style="font-size:13px;margin-top:8px">Per il forex in lotti il moltiplicatore standard è 100000 (1 lotto = 100.000 unità). Per oro e indici dipende dal contratto: controllalo sulla piattaforma.</p>
+        <div class="msg" id="impMsg" role="alert" style="margin-top:10px"></div>
+        <div id="impSummary" class="imp-summary"></div>
+        <div class="tablewrap" id="impPreview"></div>
+        <div class="pm-actions">
+          <button class="ghost" type="button" id="impClear">Annulla</button>
+          <button class="btn" type="button" id="impGo" disabled>Importa operazioni</button>
+        </div>
+      </section>
       <section class="panel"><h2>Tutte le operazioni reali</h2><div class="tablewrap" id="opList"></div></section>
     </section>
 
@@ -2383,6 +2408,162 @@ $("privDelBtn").addEventListener("click",async function(){
   }
   $("privDelMsg").textContent="Richiesta registrata. Il team la gestirà manualmente: al momento non esiste una cancellazione automatica.";
   $("privDelInput").value="";
+});
+
+/* Importazione report CSV */
+var IMP_COLS={
+  id:["ticket","positionid","position","dealid","orderid","order","id"],
+  symbol:["symbol","instrument","strumento","item"],
+  type:["type","direction","side","tipo","lato"],
+  volume:["volume","size","quantity","quantita","lots","qty","lotti"],
+  opentime:["opentime","timeopen","opendate","dataapertura","opened"],
+  closetime:["closetime","timeclose","closedate","datachiusura","closed"],
+  openprice:["openprice","entryprice","entry","priceopen","prezzoapertura"],
+  closeprice:["closeprice","exitprice","exit","priceclose","prezzochiusura"],
+  commission:["commission","commissions","commissioni","comm"],
+  swap:["swap"],
+  profit:["profit","pnl","netprofit","result","profitloss","guadagno"]
+};
+var impParsed=[],impRows=[],impDup=0,impSkip={};
+function decodeFile(buf){
+  var u=new Uint8Array(buf);
+  if(u[0]===0xFF&&u[1]===0xFE) return new TextDecoder("utf-16le").decode(buf);
+  if(u[0]===0xFE&&u[1]===0xFF) return new TextDecoder("utf-16be").decode(buf);
+  return new TextDecoder("utf-8").decode(buf).replace(/^\uFEFF/,"");
+}
+function splitLine(line,d){
+  var out=[],cur="",q=false;
+  for(var i=0;i<line.length;i++){
+    var c=line[i];
+    if(c==='"'){ if(q&&line[i+1]==='"'){cur+='"';i++} else q=!q }
+    else if(c===d&&!q){ out.push(cur);cur="" }
+    else cur+=c;
+  }
+  out.push(cur);
+  return out.map(function(x){return x.trim()});
+}
+function parseCsvText(text){
+  var lines=text.split(/\r?\n/).filter(function(l){return l.trim()!==""});
+  if(!lines.length) return [];
+  var first=lines[0],best=",",n=-1;
+  [",",";","\t"].forEach(function(d){ var c=first.split(d).length; if(c>n){n=c;best=d} });
+  return lines.map(function(l){return splitLine(l,best)});
+}
+function normKey(h){ return String(h).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,"") }
+function mapCols(headers){
+  var nh=headers.map(normKey),m={};
+  Object.keys(IMP_COLS).forEach(function(k){
+    for(var i=0;i<IMP_COLS[k].length;i++){ var j=nh.indexOf(IMP_COLS[k][i]); if(j>-1){m[k]=j;break} }
+  });
+  return m;
+}
+function parseDateStr(s){
+  s=(s||"").trim(),m;
+  if((m=s.match(/^(\d{4})[.\-\/](\d{1,2})[.\-\/](\d{1,2})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?/)))
+    return Date.UTC(+m[1],+m[2]-1,+m[3],+(m[4]||0),+(m[5]||0),+(m[6]||0));
+  if((m=s.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?/)))
+    return Date.UTC(+m[3],+m[2]-1,+m[1],+(m[4]||0),+(m[5]||0),+(m[6]||0));
+  return null;
+}
+function ymdUTC(ms){ var d=new Date(ms); return d.getUTCFullYear()+"-"+p2(d.getUTCMonth()+1)+"-"+p2(d.getUTCDate()) }
+function toNum(s){
+  if(s==null) return NaN;
+  s=String(s).replace(/\s/g,"");
+  if(s==="") return NaN;
+  if(s.indexOf(",")>-1&&s.indexOf(".")<0) s=s.replace(",","."); else s=s.replace(/,/g,"");
+  return parseFloat(s);
+}
+function dirOf(t){
+  t=(t||"").toLowerCase();
+  if(["buy","long","acquisto","b"].indexOf(t)>-1) return "long";
+  if(["sell","short","vendita","s"].indexOf(t)>-1) return "short";
+  return null;
+}
+function analyzeImport(){
+  var lines=impParsed;
+  $("impMsg").textContent="";$("impMsg").classList.remove("ok");
+  impRows=[];impSkip={};impDup=0;
+  if(lines.length<2){ $("impMsg").textContent="Il file è vuoto o non leggibile."; renderImportPanel(); return }
+  var head=lines[0],m=mapCols(head);
+  if(m.symbol==null||m.type==null||m.volume==null||m.openprice==null||m.closeprice==null||m.closetime==null){
+    $("impMsg").textContent="Colonne non riconosciute. Servono almeno: simbolo, tipo, volume, prezzo di apertura e di chiusura, data di chiusura. Colonne trovate: "+head.join(", ");
+    renderImportPanel(); return;
+  }
+  var plat=$("impPlat").value,mult=parseFloat($("impMult").value)||1;
+  var existing=new Set(trades.map(function(t){return t.external_id}).filter(Boolean)),seen=new Set();
+  for(var i=1;i<lines.length;i++){
+    var r=lines[i];
+    var g=function(k){return m[k]==null?"":(r[m[k]]||"")};
+    function skip(why){ impSkip[why]=(impSkip[why]||0)+1 }
+    var dir=dirOf(g("type"));
+    if(!dir){ skip("non è un'operazione (tipo non riconosciuto)"); continue }
+    var sym=g("symbol").toUpperCase();
+    if(!sym||sym.length>16){ skip("simbolo mancante o non valido"); continue }
+    var vol=toNum(g("volume")),op=toNum(g("openprice")),cp=toNum(g("closeprice"));
+    if(!(vol>0)||!(op>0)){ skip("volume o prezzo di apertura non validi"); continue }
+    if(isNaN(cp)){ skip("operazione ancora aperta o senza prezzo di chiusura"); continue }
+    var ct=parseDateStr(g("closetime"));
+    if(ct==null){ skip("data di chiusura non riconosciuta"); continue }
+    var ot=parseDateStr(g("opentime"));
+    var comm=toNum(g("commission")),swap=toNum(g("swap"));
+    var fees=(comm<0?-comm:0)+(swap<0?-swap:0);
+    var rid=g("id"),ext=plat+":"+(rid?rid:(sym+"|"+(ot||"")+"|"+vol+"|"+op));
+    if(existing.has(ext)||seen.has(ext)){ impDup++; continue }
+    seen.add(ext);
+    var prof=g("profit");
+    impRows.push({external_id:ext,symbol:sym,direction:dir,entry_price:op,exit_price:cp,size:vol*mult,fees:fees,
+      trade_date:ymdUTC(ct),source:plat,
+      note:"Importato da "+plat+(prof?" · profitto dal report: "+prof:"")+(rid?" · ticket "+rid:"")});
+  }
+  renderImportPanel();
+}
+function renderImportPanel(){
+  var n=impRows.length,skipped=Object.keys(impSkip).reduce(function(a,k){return a+impSkip[k]},0);
+  $("impSummary").innerHTML=
+    '<div class="kv"><span>Operazioni pronte da importare</span><b class="pos">'+n+'</b></div>'+
+    '<div class="kv"><span>Già presenti nel diario</span><b>'+impDup+'</b></div>'+
+    '<div class="kv"><span>Righe scartate</span><b>'+skipped+'</b></div>'+
+    Object.keys(impSkip).map(function(k){return '<div class="kv"><span>'+esc(k)+'</span><b>'+impSkip[k]+'</b></div>'}).join("");
+  if(!n){ $("impPreview").innerHTML=''; $("impGo").disabled=true; return }
+  $("impPreview").innerHTML='<table><thead><tr><th>Data</th><th>Strumento</th><th>Lato</th><th class="n">Ingresso</th><th class="n">Uscita</th><th class="n">Quantità</th><th class="n">Commissioni</th></tr></thead><tbody>'+
+    impRows.slice(0,10).map(function(r){return '<tr><td>'+dmy(r.trade_date)+'</td><td><b>'+esc(r.symbol)+'</b></td><td>'+(r.direction==="long"?"Long":"Short")+'</td><td class="n">'+fmt(r.entry_price,4)+'</td><td class="n">'+fmt(r.exit_price,4)+'</td><td class="n">'+fmt(r.size,2)+'</td><td class="n">'+fmt(r.fees,2)+'</td></tr>'}).join("")+
+    '</tbody></table>'+(n>10?'<p class="muted" style="font-size:13px;margin-top:8px">Mostrate le prime 10 di '+n+' operazioni.</p>':'');
+  $("impGo").disabled=false;
+}
+function readImportFile(f){
+  if(!f) return;
+  if(f.size>5*1024*1024){ $("impMsg").textContent="Il file supera i 5 MB."; return }
+  var rd=new FileReader();
+  rd.onload=function(){
+    try{ impParsed=parseCsvText(decodeFile(rd.result)); analyzeImport() }
+    catch(err){ $("impMsg").textContent="Lettura non riuscita: "+err.message }
+  };
+  rd.onerror=function(){ $("impMsg").textContent="Impossibile leggere il file." };
+  rd.readAsArrayBuffer(f);
+}
+$("impFile").addEventListener("change",function(){ readImportFile(this.files[0]) });
+$("impPlat").addEventListener("change",function(){ if(impParsed.length) analyzeImport() });
+$("impMult").addEventListener("change",function(){ if(impParsed.length) analyzeImport() });
+$("impClear").addEventListener("click",function(){
+  impParsed=[];impRows=[];impDup=0;impSkip={};
+  $("impFile").value="";$("impMsg").textContent="";$("impSummary").innerHTML="";$("impPreview").innerHTML="";$("impGo").disabled=true;
+});
+$("impGo").addEventListener("click",async function(){
+  if(!impRows.length) return;
+  $("impGo").disabled=true;$("impMsg").classList.remove("ok");$("impMsg").textContent="Importazione in corso…";
+  var ok=0,err=null;
+  for(var i=0;i<impRows.length;i+=200){
+    var batch=impRows.slice(i,i+200).map(function(r){return Object.assign({user_id:user.id},r)});
+    var res=await sb.from("trades").insert(batch).select();
+    if(res.error){ err=res.error.code==="23505"?"Alcune operazioni erano già presenti: nessun duplicato è stato salvato.":res.error.message; break }
+    trades=trades.concat(res.data);ok+=res.data.length;
+  }
+  impRows=impRows.slice(ok);
+  renderCurrent();refreshRank();
+  if(err){ $("impMsg").textContent="Importate "+ok+" operazioni. "+err; }
+  else { $("impMsg").classList.add("ok");$("impMsg").textContent="Importate "+ok+" operazioni."; }
+  $("impFile").value="";impParsed=[];
+  renderImportPanel();
 });
 
 /* Avvio */
