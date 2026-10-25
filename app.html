@@ -417,6 +417,7 @@ table th{font-weight:600}
           <label>Nome utente (3-20 caratteri: lettere minuscole, numeri, _)<input id="profUser" maxlength="20" required></label>
           <label>Capitale iniziale del conto (USD)<input type="number" id="profCap" min="1" step="100" required></label>
           <label style="display:flex;gap:10px;align-items:center;font-size:14px;color:var(--ink)"><input type="checkbox" id="profInLb" style="width:auto"> Mostra il mio profilo nella Leaderboard (solo nome utente e statistiche aggregate)</label>
+<label style="display:flex;gap:10px;align-items:center;font-size:14px;color:var(--ink)"><input type="checkbox" id="profPublic" style="width:auto"> Profilo pubblico (visibile a chiunque abbia il link)</label><div style="margin:10px 0 4px;font-size:13px;color:var(--mute)">Cosa mostrare nel profilo pubblico</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px 16px"><label style="display:flex;gap:10px;align-items:center;font-size:14px;color:var(--ink)"><input type="checkbox" id="pp_rank" style="width:auto"> Rank e rating</label><label style="display:flex;gap:10px;align-items:center;font-size:14px;color:var(--ink)"><input type="checkbox" id="pp_return" style="width:auto"> Rendimento %</label><label style="display:flex;gap:10px;align-items:center;font-size:14px;color:var(--ink)"><input type="checkbox" id="pp_win" style="width:auto"> Win rate</label><label style="display:flex;gap:10px;align-items:center;font-size:14px;color:var(--ink)"><input type="checkbox" id="pp_pf" style="width:auto"> Profit factor</label><label style="display:flex;gap:10px;align-items:center;font-size:14px;color:var(--ink)"><input type="checkbox" id="pp_dd" style="width:auto"> Drawdown massimo</label><label style="display:flex;gap:10px;align-items:center;font-size:14px;color:var(--ink)"><input type="checkbox" id="pp_trades" style="width:auto"> Numero di trade</label><label style="display:flex;gap:10px;align-items:center;font-size:14px;color:var(--ink)"><input type="checkbox" id="pp_streak" style="width:auto"> Giorni positivi e serie</label><label style="display:flex;gap:10px;align-items:center;font-size:14px;color:var(--ink)"><input type="checkbox" id="pp_equity" style="width:auto"> Grafico equity curve</label><label style="display:flex;gap:10px;align-items:center;font-size:14px;color:var(--ink)"><input type="checkbox" id="pp_history" style="width:auto"> Storico mensile</label><label style="display:flex;gap:10px;align-items:center;font-size:14px;color:var(--ink)"><input type="checkbox" id="pp_markets" style="width:auto"> Mercati negoziati</label><label style="display:flex;gap:10px;align-items:center;font-size:14px;color:var(--ink)"><input type="checkbox" id="pp_position" style="width:auto"> Posizione in classifica</label><label style="display:flex;gap:10px;align-items:center;font-size:14px;color:var(--ink)"><input type="checkbox" id="pp_net" style="width:auto"> Importo netto in valuta (nascosto di default)</label><label style="display:flex;gap:10px;align-items:center;font-size:14px;color:var(--ink)"><input type="checkbox" id="pp_detail" style="width:auto"> Dettaglio dei singoli trade (nascosto di default)</label></div><label style="margin-top:10px">Link del profilo<div style="display:flex;gap:8px"><input id="profLink" readonly><button class="ghost" type="button" id="profCopy">Copia</button></div></label>
           <div class="msg" id="profMsg" role="alert"></div>
           <div><button class="btn" type="submit" id="profBtn">Salva profilo</button></div>
         </form>
@@ -1043,6 +1044,25 @@ async function openSession(id){
 function stopAll(){bStop();}
 function renderBacktest(){updateBt();renderSessions()}
 
+/* Profilo pubblico */
+var PRIV_KEYS=["rank","return","win","pf","dd","trades","streak","equity","history","markets","position","net","detail"];
+function getPrivacy(){
+  var o={};
+  PRIV_KEYS.forEach(function(k){ var el=$("pp_"+k); o[k]=el?el.checked:false; });
+  return o;
+}
+function profileUrl(name){
+  if(!name) return "";
+  return new URL("profile.html?u="+encodeURIComponent(name),location.href).href;
+}
+$("profCopy").addEventListener("click",function(){
+  var v=$("profLink").value;
+  if(!v) return;
+  if(navigator.clipboard) navigator.clipboard.writeText(v);
+  $("profCopy").textContent="Copiato";
+  setTimeout(function(){$("profCopy").textContent="Copia"},1500);
+});
+
 /* Profilo e rank */
 function rankEmblem(color,name){
   var letter=(name||"?").charAt(0);
@@ -1082,7 +1102,7 @@ async function saveProfile(e){
   if(!/^[a-z0-9_]{3,20}$/.test(u)){$("profMsg").textContent="Il nome utente deve avere 3-20 caratteri: lettere minuscole, numeri o _.";return}
   if(!(cap>0)){$("profMsg").textContent="Inserisci un capitale iniziale valido.";return}
   $("profBtn").disabled=true;
-  var r=await sb.from("profiles").upsert({user_id:user.id,username:u,starting_capital:cap,in_leaderboard:$("profInLb").checked},{onConflict:"user_id"}).select().single();
+  var r=await sb.from("profiles").upsert({user_id:user.id,username:u,starting_capital:cap,in_leaderboard:$("profInLb").checked,is_public:$("profPublic").checked,privacy:getPrivacy()},{onConflict:"user_id"}).select().single();
   $("profBtn").disabled=false;
   if(r.error){$("profMsg").textContent=r.error.code==="23505"?"Nome utente già usato, scegline un altro.":"Salvataggio non riuscito: "+r.error.message;return}
   profile=r.data;
@@ -1123,7 +1143,7 @@ function renderLeaderboard(){
     var r=x.r,cls2=(x.pos<=3?" lb-top"+x.pos:"")+(r.is_self?" lb-self":"");
     var col=r.rank_color||"#b87333";
     return '<tr class="'+cls2+'"><td><span class="lb-pos">'+x.pos+'</span></td>'+
-      '<td><span class="lb-av" style="background:'+esc(col)+'">'+esc(lbInitials(r.username))+'</span><b>'+esc(r.username)+'</b>'+(r.is_self?' <span class="lb-badge">Tu</span>':'')+'</td>'+
+      '<td><span class="lb-av" style="background:'+esc(col)+'">'+esc(lbInitials(r.username))+'</span><a href="profile.html?u='+encodeURIComponent(r.username)+'" style="color:inherit;text-decoration:none"><b>'+esc(r.username)+'</b></a>'+(r.is_self?' <span class="lb-badge">Tu</span>':'')+'</td>'+
       '<td><span class="lb-rank">'+rankEmblem(col,r.rank_name)+esc(r.rank_name)+'</span></td>'+
       '<td class="n"><b>'+r.points+'</b></td>'+
       '<td class="n '+cls(r.return_pct)+'">'+sgn(r.return_pct)+'%</td>'+
@@ -1148,6 +1168,10 @@ function renderImpostazioni(){
   $("profUser").value=profile?profile.username||"":"";
   $("profCap").value=profile?profile.starting_capital:10000;
   $("profInLb").checked=profile?!!profile.in_leaderboard:false;
+  $("profPublic").checked=profile?!!profile.is_public:false;
+  var pvv=(profile&&profile.privacy)||{};
+  PRIV_KEYS.forEach(function(k){ var el=$("pp_"+k); if(el) el.checked=(pvv[k]!==undefined)?!!pvv[k]:(k!=="net"&&k!=="detail"); });
+  $("profLink").value=profileUrl(profile?profile.username:"");
 }
 function renderCurrent(){
   if(view==="dashboard") renderDashboard();
