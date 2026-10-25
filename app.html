@@ -831,6 +831,19 @@ th:last-child,td:last-child{padding-right:14px}
 .cm-post footer{display:flex;gap:8px}
 .cm-post footer button{font-size:12px;padding:5px 12px}
 @media (max-width:1000px){.cm-layout{grid-template-columns:1fr}}
+
+.cm-attach{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.cm-filebtn{cursor:pointer;display:inline-block;border-radius:999px;padding:8px 14px;border:1px solid var(--line)}
+.cm-hint{font-size:12px;margin:0}
+.cm-files{display:grid;gap:8px}
+.cm-file{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:13px;padding:6px 10px;border:1px solid var(--line);border-radius:12px}
+.cm-file button{padding:2px 9px;border-radius:999px}
+.cm-medias{display:grid;gap:10px;margin:4px 0 12px}
+.cm-media{width:100%;max-height:420px;object-fit:contain;border-radius:16px;border:1px solid var(--line);background:#000}
+.cm-like{background:transparent;border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-size:13px;color:var(--mute);display:inline-flex;gap:6px;align-items:center}
+.cm-like:hover{border-color:var(--loss);color:var(--loss)}
+.cm-like.on{color:var(--loss);border-color:color-mix(in srgb,var(--loss) 50%,transparent);background:color-mix(in srgb,var(--loss) 10%,transparent)}
+.cm-spacer{flex:1}
 </style>
 </head>
 <body>
@@ -961,8 +974,14 @@ th:last-child,td:last-child{padding-right:14px}
           <h2>Pubblica nella stanza</h2>
           <form id="cmForm" autocomplete="off" class="cm-form">
             <label>Titolo<input id="cmTitle" maxlength="120" placeholder="Es. Breakout dopo il range di Londra"></label>
-            <label>Descrizione<textarea id="cmBody" rows="6" maxlength="3000" placeholder="Regole, contesto, timeframe, come gestisci il rischio. Niente consigli di investimento garantiti."></textarea></label>
+            <label>Descrizione<textarea id="cmBody" rows="6" maxlength="3000" placeholder="Regole, contesto, timeframe, come gestisci il rischio."></textarea></label>
             <label>Tag (separati da virgola)<input id="cmTags" maxlength="120" placeholder="es. forex, breakout, swing"></label>
+            <div class="cm-attach">
+              <label class="ghost cm-filebtn">Aggiungi screenshot o video<input type="file" id="cmFile" accept="image/jpeg,image/png,image/webp,video/webm,video/mp4" multiple hidden></label>
+              <button class="ghost" type="button" id="cmRec">Registra schermo</button>
+            </div>
+            <p class="muted cm-hint">Massimo 4 allegati. Immagini fino a 5 MB, video fino a 50 MB.</p>
+            <div id="cmFiles" class="cm-files"></div>
             <div class="msg" id="cmMsg" role="alert"></div>
             <button class="btn" type="submit" id="cmSend">Pubblica</button>
           </form>
@@ -3339,13 +3358,69 @@ $("admList").addEventListener("click",async function(e){
   renderAdmin();
 });
 
-/* Community: stanze Strategie e Setup */
-var cmRoom="strategie";
+/* Community: stanze, allegati, Mi piace */
+var cmRoom="strategie",cmFiles=[],cmRec=null,cmRecTimer=null,CM_MAX=4;
+var CM_IMG=5*1024*1024,CM_VID=50*1024*1024;
 function cmLabel(r){ return r==="setup"?"Setup":"Strategie" }
 function cmTagsFrom(txt){
   return txt.split(",").map(function(t){return t.trim().toLowerCase().replace(/[^a-z0-9àèéìòù_\- ]/gi,"").slice(0,24)})
     .filter(function(t,i,a){return t&&a.indexOf(t)===i}).slice(0,5);
 }
+function cmMsg(t,ok){ $("cmMsg").classList.toggle("ok",!!ok); $("cmMsg").textContent=t }
+function cmRenderFiles(){
+  $("cmFiles").innerHTML=cmFiles.map(function(f,i){
+    var isVid=f.type.indexOf("video")===0;
+    return '<div class="cm-file"><span>'+(isVid?"Video":"Immagine")+' · '+esc(f.name.slice(0,30))+'</span><button class="ghost" type="button" data-cmrm="'+i+'" aria-label="Rimuovi allegato">×</button></div>';
+  }).join("");
+  $("cmRec").textContent=cmRec?"Ferma registrazione":"Registra schermo";
+}
+function cmAddFile(f){
+  if(cmFiles.length>=CM_MAX){ cmMsg("Puoi allegare al massimo "+CM_MAX+" file."); return false }
+  var isVid=f.type.indexOf("video")===0,isImg=f.type.indexOf("image")===0;
+  if(!isVid&&!isImg){ cmMsg("Formato non supportato: usa immagini JPG, PNG o WebP, oppure video WebM o MP4."); return false }
+  if(isImg&&f.size>CM_IMG){ cmMsg("Un'immagine supera i 5 MB."); return false }
+  if(isVid&&f.size>CM_VID){ cmMsg("Il video supera i 50 MB."); return false }
+  cmFiles.push(f); cmRenderFiles(); return true;
+}
+$("cmFile").addEventListener("change",function(){
+  Array.prototype.forEach.call(this.files,function(f){ cmAddFile(f) });
+  this.value="";
+});
+$("cmFiles").addEventListener("click",function(e){
+  var b=e.target.closest("[data-cmrm]"); if(!b) return;
+  cmFiles.splice(+b.getAttribute("data-cmrm"),1); cmRenderFiles();
+});
+async function cmToggleRec(){
+  if(cmRec){ cmRec.stop(); return }
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getDisplayMedia||!window.MediaRecorder){
+    cmMsg("La registrazione dello schermo non è supportata da questo browser."); return;
+  }
+  try{
+    var stream=await navigator.mediaDevices.getDisplayMedia({video:true,audio:false});
+    var chunks=[],mr=new MediaRecorder(stream,{mimeType:"video/webm"});
+    mr.ondataavailable=function(e){ if(e.data&&e.data.size) chunks.push(e.data) };
+    mr.onstop=function(){
+      clearTimeout(cmRecTimer);
+      stream.getTracks().forEach(function(t){t.stop()});
+      var blob=new Blob(chunks,{type:"video/webm"});
+      cmRec=null;
+      if(blob.size>0) cmAddFile(new File([blob],"registrazione-"+Date.now()+".webm",{type:"video/webm"}));
+      cmRenderFiles();
+    };
+    var track=stream.getVideoTracks()[0];
+    if(track) track.onended=function(){ if(cmRec) cmRec.stop() };
+    mr.start(1000);
+    cmRec=mr;
+    cmRecTimer=setTimeout(function(){ if(cmRec) cmRec.stop() },120000);
+    cmRenderFiles();
+    cmMsg("Registrazione in corso (massimo 2 minuti). Premi di nuovo per fermare.",true);
+  }catch(err){
+    cmRec=null;cmRenderFiles();
+    cmMsg("Registrazione annullata o non consentita.");
+  }
+}
+$("cmRec").addEventListener("click",cmToggleRec);
+function cmExt(f){ return f.type==="image/png"?"png":f.type==="image/webp"?"webp":f.type==="video/mp4"?"mp4":f.type==="video/webm"?"webm":"jpg" }
 async function renderCommunity(){
   $("cmListTitle").textContent="Stanza "+cmLabel(cmRoom);
   document.querySelectorAll("#cmRooms [data-room]").forEach(function(b){b.classList.toggle("on",b.getAttribute("data-room")===cmRoom)});
@@ -3353,56 +3428,106 @@ async function renderCommunity(){
   if(!sb) return;
   var r=await sb.from("community_posts").select("*").eq("room",cmRoom).order("created_at",{ascending:false}).limit(50);
   if(r.error){ $("cmList").innerHTML='<p class="muted">Non riesco a caricare la stanza: '+esc(r.error.message)+'</p>'; return }
-  if(!r.data.length){ $("cmList").innerHTML='<div class="g-empty">Nessun post ancora in questa stanza. Sii il primo a pubblicare.</div>'; return }
-  $("cmList").innerHTML=r.data.map(function(p){
-    var mine=user&&p.user_id===user.id;
-    var admin=isAdmin();
+  var posts=r.data||[];
+  if(!posts.length){ $("cmList").innerHTML='<div class="g-empty">Nessun post ancora in questa stanza. Sii il primo a pubblicare.</div>'; return }
+  var ids=posts.map(function(p){return p.id});
+  var lk=await sb.from("community_likes").select("post_id,user_id").in("post_id",ids);
+  var likes={},mine={};
+  (lk.data||[]).forEach(function(l){
+    likes[l.post_id]=(likes[l.post_id]||0)+1;
+    if(user&&l.user_id===user.id) mine[l.post_id]=true;
+  });
+  var urls={};
+  await Promise.all(posts.map(async function(p){
+    urls[p.id]=await Promise.all((p.media_paths||[]).map(async function(path){
+      var su=await sb.storage.from("community").createSignedUrl(path,3600);
+      return su.data?su.data.signedUrl:null;
+    }));
+  }));
+  $("cmList").innerHTML=posts.map(function(p){
+    var own=user&&p.user_id===user.id,admin=isAdmin();
+    var media=(p.media_paths||[]).map(function(path,i){
+      var u=urls[p.id][i],t=(p.media_types||[])[i];
+      if(!u) return '';
+      return t==="video"?'<video class="cm-media" src="'+esc(u)+'" controls preload="metadata"></video>':'<img class="cm-media" src="'+esc(u)+'" alt="Allegato del post" loading="lazy">';
+    }).join("");
+    var liked=!!mine[p.id];
     return '<article class="cm-post" data-id="'+esc(p.id)+'">'+
       '<header><span class="cm-room">'+cmLabel(p.room)+'</span><span class="cm-date">'+esc(dmy(p.created_at.slice(0,10)))+'</span></header>'+
       '<h3>'+esc(p.title)+'</h3>'+
       '<p class="cm-author">di '+esc(p.author_name||"utente")+'</p>'+
       '<p class="cm-body">'+esc(p.body)+'</p>'+
+      (media?'<div class="cm-medias">'+media+'</div>':'')+
       (p.tags&&p.tags.length?'<div class="cm-tags">'+p.tags.map(function(t){return '<span>#'+esc(t)+'</span>'}).join("")+'</div>':'')+
       '<footer>'+
-        (mine||admin?'<button class="ghost" type="button" data-cmdel="'+esc(p.id)+'">Elimina</button>':'')+
-        (!mine?'<button class="ghost" type="button" data-cmrep="'+esc(p.id)+'">Segnala</button>':'')+
+        '<button class="cm-like'+(liked?' on':'')+'" type="button" data-cmlike="'+esc(p.id)+'" aria-pressed="'+liked+'">♥ <span>'+(likes[p.id]||0)+'</span></button>'+
+        '<span class="cm-spacer"></span>'+
+        (own||admin?'<button class="ghost" type="button" data-cmdel="'+esc(p.id)+'">Elimina</button>':'')+
+        (!own?'<button class="ghost" type="button" data-cmrep="'+esc(p.id)+'">Segnala</button>':'')+
       '</footer></article>';
   }).join("");
 }
 $("cmRooms").addEventListener("click",function(e){
-  var b=e.target.closest("[data-room]");
-  if(!b) return;
-  cmRoom=b.getAttribute("data-room");
-  renderCommunity();
+  var b=e.target.closest("[data-room]"); if(!b) return;
+  cmRoom=b.getAttribute("data-room"); renderCommunity();
 });
 $("cmForm").addEventListener("submit",async function(e){
   e.preventDefault();
-  $("cmMsg").classList.remove("ok");$("cmMsg").textContent="";
+  cmMsg("",false);
   var title=$("cmTitle").value.trim(),body=$("cmBody").value.trim();
-  if(title.length<3){ $("cmMsg").textContent="Il titolo deve avere almeno 3 caratteri."; return }
-  if(body.length<10){ $("cmMsg").textContent="La descrizione deve avere almeno 10 caratteri."; return }
+  if(title.length<3){ cmMsg("Il titolo deve avere almeno 3 caratteri."); return }
+  if(body.length<10){ cmMsg("La descrizione deve avere almeno 10 caratteri."); return }
   $("cmSend").disabled=true;
-  var r=await sb.from("community_posts").insert({user_id:user.id,author_name:displayName().slice(0,60),room:cmRoom,
-    title:title,body:body,tags:cmTagsFrom($("cmTags").value)}).select().single();
-  $("cmSend").disabled=false;
-  if(r.error){ $("cmMsg").textContent="Pubblicazione non riuscita: "+r.error.message; return }
-  $("cmTitle").value="";$("cmBody").value="";$("cmTags").value="";
-  $("cmMsg").classList.add("ok");$("cmMsg").textContent="Post pubblicato.";
-  renderCommunity();
+  try{
+    var paths=[],types=[];
+    for(var i=0;i<cmFiles.length;i++){
+      var f=cmFiles[i],isVid=f.type.indexOf("video")===0;
+      var path=user.id+"/"+Date.now()+"-"+i+"."+cmExt(f);
+      cmMsg("Carico l'allegato "+(i+1)+" di "+cmFiles.length+"…",true);
+      var up=await sb.storage.from("community").upload(path,f,{contentType:f.type});
+      if(up.error) throw new Error("Caricamento allegato non riuscito: "+up.error.message);
+      paths.push(path); types.push(isVid?"video":"image");
+    }
+    var r=await sb.from("community_posts").insert({user_id:user.id,author_name:displayName().slice(0,60),room:cmRoom,
+      title:title,body:body,tags:cmTagsFrom($("cmTags").value),media_paths:paths,media_types:types}).select().single();
+    if(r.error) throw new Error("Pubblicazione non riuscita: "+r.error.message);
+    $("cmTitle").value="";$("cmBody").value="";$("cmTags").value="";
+    cmFiles=[];cmRenderFiles();
+    cmMsg("Post pubblicato.",true);
+    renderCommunity();
+  }catch(err){
+    cmMsg(err.message);
+  }finally{
+    $("cmSend").disabled=false;
+  }
 });
 $("cmList").addEventListener("click",async function(e){
-  var d=e.target.closest("[data-cmdel]"),g=e.target.closest("[data-cmrep]");
-  if(d){
-    if(!confirm("Eliminare questo post?")) return;
-    var r=await sb.from("community_posts").delete().eq("id",d.getAttribute("data-cmdel"));
-    if(r.error){ alert("Eliminazione non riuscita: "+r.error.message); return }
+  var like=e.target.closest("[data-cmlike]"),del=e.target.closest("[data-cmdel]"),rep=e.target.closest("[data-cmrep]");
+  if(like){
+    var id=like.getAttribute("data-cmlike"),isOn=like.classList.contains("on");
+    var res=isOn
+      ? await sb.from("community_likes").delete().eq("post_id",id).eq("user_id",user.id)
+      : await sb.from("community_likes").insert({post_id:id,user_id:user.id});
+    if(res.error){ alert("Operazione non riuscita: "+res.error.message); return }
     renderCommunity(); return;
   }
-  if(g){
+  if(del){
+    if(!confirm("Eliminare questo post e i suoi allegati?")) return;
+    var id2=del.getAttribute("data-cmdel");
+    var card=del.closest(".cm-post");
+    var row=await sb.from("community_posts").select("media_paths").eq("id",id2).maybeSingle();
+    var r2=await sb.from("community_posts").delete().eq("id",id2);
+    if(r2.error){ alert("Eliminazione non riuscita: "+r2.error.message); return }
+    if(row.data&&row.data.media_paths&&row.data.media_paths.length){
+      await sb.storage.from("community").remove(row.data.media_paths);
+    }
+    renderCommunity(); return;
+  }
+  if(rep){
     var reason=prompt("Perché segnali questo post? (almeno 10 caratteri)");
     if(!reason||reason.trim().length<10){ if(reason!==null) alert("Scrivi almeno 10 caratteri."); return }
     var rr=await sb.from("feedback").insert({user_id:user.id,contact_email:user.email||"",category:"problema",
-      message:"Segnalazione post community "+g.getAttribute("data-cmrep")+": "+reason.trim(),page:"community"});
+      message:"Segnalazione post community "+rep.getAttribute("data-cmrep")+": "+reason.trim(),page:"community"});
     alert(rr.error?"Segnalazione non riuscita: "+rr.error.message:"Grazie, la segnalazione è arrivata al team.");
   }
 });
