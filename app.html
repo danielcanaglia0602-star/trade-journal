@@ -801,6 +801,13 @@ th:last-child,td:last-child{padding-right:14px}
   .gd-title{font-size:24px}
   .gd-phase{padding:20px}
 }
+.cal-tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:22px}
+.cal-tile{aspect-ratio:1.5/1;display:flex;flex-direction:column;justify-content:space-between;padding:18px;border-radius:22px;border:1px solid var(--line);background:linear-gradient(160deg,color-mix(in srgb,var(--panel) 96%,transparent),var(--panel));box-shadow:var(--shadow-sm);transition:transform .25s ease,border-color .25s ease}
+.cal-tile:hover{transform:translateY(-3px);border-color:color-mix(in srgb,var(--accent) 40%,var(--line))}
+.cal-tile span{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--mute);font-weight:600}
+.cal-tile b{font:700 clamp(20px,2.4vw,30px) var(--font-title);letter-spacing:-.01em}
+.cal-tile small{font-size:12px;color:var(--mute);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media (max-width:720px){.cal-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.cal-tile{aspect-ratio:auto;min-height:120px}}
 </style>
 </head>
 <body>
@@ -1651,7 +1658,14 @@ function renderCalendario(){
   var title=calMonth.toLocaleDateString("it-IT",{month:"long",year:"numeric"});
   var dayList=calSel?trades.filter(function(x){return x.trade_date===calSel}):null;
   var detail=dayList?'<h2>Operazioni del '+dmy(calSel)+'</h2>'+statGrid(stats(dayList))+'<div class="tablewrap">'+tableHTML(dayList)+'</div>':'<h2>Mese di '+esc(title)+'</h2>'+statGrid(stats(monthList));
-  $("v-calendario").innerHTML='<h1>Calendario</h1><p class="sub">Clicca un giorno per vedere le sue operazioni.</p>'+
+  var ms=stats(monthList),mdays=daily(monthList),posDays=Object.keys(mdays).filter(function(k){return mdays[k]>0}).length,totDays=Object.keys(mdays).length;
+  var tiles='<div class="cal-tiles">'+
+    '<div class="cal-tile"><span>Guadagno del mese</span><b class="'+(ms.n?cls(ms.net):"")+'">'+(ms.n?sgn(ms.net):"—")+'</b><small>'+title+'</small></div>'+
+    '<div class="cal-tile"><span>Trade chiusi</span><b>'+ms.n+'</b><small>'+(ms.n?totDays+" giorni operativi":"Nessuna operazione")+'</small></div>'+
+    '<div class="cal-tile"><span>Winrate</span><b>'+(ms.n?fmt(ms.winrate,1)+"%":"—")+'</b><small>'+(ms.n?ms.wins+" vincenti su "+ms.n:"—")+'</small></div>'+
+    '<div class="cal-tile"><span>Giorni positivi</span><b>'+(totDays?posDays+" / "+totDays:"—")+'</b><small>'+(totDays?"sul totale operativo":"—")+'</small></div>'+
+    '</div>';
+  $("v-calendario").innerHTML='<h1>Calendario</h1><p class="sub">Clicca un giorno per vedere le sue operazioni.</p>'+tiles+
     '<section class="panel"><div class="bar"><button class="ghost" type="button" data-nav="-1">← Mese precedente</button><b style="text-transform:capitalize">'+esc(title)+'</b><button class="ghost" type="button" data-nav="1">Mese successivo →</button></div>'+
     '<div class="cal wk"><span>Lun</span><span>Mar</span><span>Mer</span><span>Gio</span><span>Ven</span><span>Sab</span><span>Dom</span></div>'+
     '<div class="cal" style="margin-top:6px">'+cells+'</div></section><section class="panel">'+detail+'</section>';
