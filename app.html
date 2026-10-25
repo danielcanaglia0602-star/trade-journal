@@ -1350,6 +1350,13 @@ table tbody tr:hover td{background:color-mix(in srgb,var(--accent) 8%,transparen
         <button type="button" data-f="risolto">Risolte</button>
       </div>
       <div id="admList" style="margin-top:18px"></div>
+      <section class="panel" style="margin-top:22px">
+        <h2>Parole non consentite</h2>
+        <p class="muted" style="margin-bottom:12px">Post della community, nomi e biografie che contengono queste parole vengono bloccati. Non sono visibili agli utenti.</p>
+        <div class="g-add"><input id="bwNew" maxlength="40" placeholder="Scrivi una parola o una frase"><button class="btn" type="button" id="bwAdd">Aggiungi</button></div>
+        <div id="bwList" class="cm-tags" style="margin-top:12px"></div>
+        <div class="msg" id="bwMsg" role="status" style="margin-top:10px"></div>
+      </section>
     </section>
 
     <section id="v-impostazioni" class="view hidden">
@@ -2464,6 +2471,7 @@ async function loadAll(){
     await loadProfile();
   }
   loadPrefs();applyPrefs();
+  await loadBanned();
   await refreshAvatar();
   await refreshRank();
   renderCurrent();
@@ -3152,6 +3160,7 @@ $("pmForm").addEventListener("submit",async function(e){
   e.preventDefault();
   setPmMsg("",false);
   var name=$("pmName").value.replace(/\s+/g," ").trim();
+  if(bannedHit([name,$("pmUser").value,$("pmBio").value,$("pmLoc").value,$("pmStyle").value].join(" "))){ setPmMsg("Nome o biografia contengono parole non consentite.",false); return }
   if(name&&(name.length<2||/[\u0000-\u001f]/.test(name))){ setPmMsg("Il nome visualizzato deve avere almeno 2 caratteri.",false); return }
   var uname=$("pmUser").value.trim().toLowerCase();
   if(!/^[a-z0-9_]{3,20}$/.test(uname)){ setPmMsg("Il nome utente deve avere 3-20 caratteri: lettere minuscole, numeri o _.",false); return }
@@ -3424,6 +3433,7 @@ async function renderMyFeedback(){
 }
 async function renderAdmin(){
   if(!isAdmin()) return;
+  renderBanned();
   $("admList").innerHTML='<p class="muted">Carico…</p>';
   var r=await sb.from("feedback").select("*").order("created_at",{ascending:false});
   if(r.error){ $("admList").innerHTML='<p class="muted">Non riesco a caricare le segnalazioni: '+esc(r.error.message)+'</p>'; return }
@@ -3578,6 +3588,7 @@ $("cmForm").addEventListener("submit",async function(e){
   var title=$("cmTitle").value.trim(),body=$("cmBody").value.trim();
   if(title.length<3){ cmMsg("Il titolo deve avere almeno 3 caratteri."); return }
   if(body.length<10){ cmMsg("La descrizione deve avere almeno 10 caratteri."); return }
+  if(bannedHit(title+" "+body+" "+$("cmTags").value)){ cmMsg("Il testo contiene parole non consentite. Modificalo e riprova."); return }
   $("cmSend").disabled=true;
   try{
     var paths=[],types=[];
@@ -3673,6 +3684,47 @@ $("cmList").addEventListener("click",async function(e){
     b.addEventListener("mouseleave",function(){ var e=b.querySelector(".em"); if(e) e.style.transform="" });
   });
 })();
+/* Parole non consentite */
+var BANNED=[];
+function normWord(w){ return (w||"").toLowerCase().replace(/\s+/g," ").trim() }
+async function loadBanned(){
+  if(!sb||!user) return;
+  var r=await sb.from("banned_words").select("word");
+  BANNED=r.error?[]:(r.data||[]).map(function(x){return x.word});
+}
+function bannedHit(text){
+  var t=" "+(text||"").toLowerCase()+" ";
+  for(var i=0;i<BANNED.length;i++){
+    var w=BANNED[i];
+    var re=new RegExp("[^a-zàèéìòù]"+w.replace(/ /g,"[^a-zàèéìòù]+")+"[^a-zàèéìòù]");
+    if(re.test(t)) return w;
+  }
+  return null;
+}
+function renderBanned(){
+  if(!$("bwList")) return;
+  $("bwList").innerHTML=BANNED.length?BANNED.map(function(w){
+    return '<span>'+esc(w)+' <button class="ghost" type="button" data-bwdel="'+esc(w)+'" aria-label="Rimuovi" style="padding:0 6px;margin-left:4px">×</button></span>';
+  }).join(""):'<span class="muted">Nessuna parola ancora.</span>';
+}
+$("bwAdd").addEventListener("click",async function(){
+  $("bwMsg").textContent="";
+  var w=normWord($("bwNew").value);
+  if(!/^[a-zàèéìòù ]{2,40}$/.test(w)){ $("bwMsg").textContent="Usa solo lettere, tra 2 e 40 caratteri."; return }
+  var r=await sb.from("banned_words").insert({word:w});
+  if(r.error){ $("bwMsg").textContent=r.error.code==="23505"?"Questa parola è già nella lista.":"Non aggiunta: "+r.error.message; return }
+  $("bwNew").value="";
+  BANNED.push(w); renderBanned();
+  $("bwMsg").textContent="Parola aggiunta.";
+});
+$("bwList").addEventListener("click",async function(e){
+  var b=e.target.closest("[data-bwdel]"); if(!b) return;
+  var w=b.getAttribute("data-bwdel");
+  var r=await sb.from("banned_words").delete().eq("word",w);
+  if(r.error){ alert("Rimozione non riuscita: "+r.error.message); return }
+  BANNED=BANNED.filter(function(x){return x!==w}); renderBanned();
+});
+
 /* Avvio */
 if(!ready){
   $("auth").innerHTML='<div class="panel authbox"><h1>Configurazione mancante</h1><p class="sub">Inserisci URL e chiave Supabase in config.js.</p></div>';
