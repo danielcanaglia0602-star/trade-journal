@@ -844,6 +844,9 @@ th:last-child,td:last-child{padding-right:14px}
 .cm-like:hover{border-color:var(--loss);color:var(--loss)}
 .cm-like.on{color:var(--loss);border-color:color-mix(in srgb,var(--loss) 50%,transparent);background:color-mix(in srgb,var(--loss) 10%,transparent)}
 .cm-spacer{flex:1}
+.tf-photo{display:grid;gap:8px;margin-top:4px}
+.tf-hint{font-size:12px}
+.tf-photo-btn{padding:2px 10px;font-size:12px;margin-left:6px}
 </style>
 </head>
 <body>
@@ -929,6 +932,11 @@ th:last-child,td:last-child{padding-right:14px}
           <label>Commissioni<input type="number" id="fees" step="any" min="0" value="0"></label>
         </div>
         <label>Note<textarea id="note" maxlength="1000" placeholder="Setup, errori, emozioni…"></textarea></label>
+        <div class="tf-photo">
+          <label class="ghost cm-filebtn">Allega foto<input type="file" id="tradeFile" accept="image/jpeg,image/png,image/webp" multiple hidden></label>
+          <span class="muted tf-hint">Screenshot del grafico o della ricevuta. Max 3 foto, 5 MB ciascuna.</span>
+          <div id="tradeFiles" class="cm-files"></div>
+        </div>
         <div class="msg" id="tradeMsg" role="alert"></div>
         <div><button class="btn" type="submit" id="saveBtn">Salva operazione</button></div>
       </form>
@@ -1506,7 +1514,7 @@ function tableHTML(list){
   var rows=sortTrades(list).reverse().map(function(t){var p=pnl(t);
     return '<tr><td>'+dmy(t.trade_date)+'</td><td><b>'+esc(t.symbol)+'</b></td><td>'+dirPill(t.direction)+'</td>'+
       '<td class="n">'+fmt(t.entry_price,4)+'</td><td class="n">'+fmt(t.exit_price,4)+'</td><td class="n">'+fmt(t.size,2)+'</td>'+
-      '<td class="n '+cls(p)+'"><b>'+sgn(p)+'</b></td><td class="note">'+esc(t.note)+'</td>'+
+      '<td class="n '+cls(p)+'"><b>'+sgn(p)+'</b></td><td class="note">'+esc(t.note)+(t.screenshot_paths&&t.screenshot_paths.length?' <button class="ghost tf-photo-btn" type="button" data-photo="'+esc(t.screenshot_paths[0])+'">Foto</button>':'')+'</td>'+
       '<td><button class="ghost" type="button" data-del="'+esc(t.id)+'" aria-label="Elimina '+esc(t.symbol)+'">Elimina</button></td></tr>'}).join("");
   return '<table><thead><tr><th>Data</th><th>Strumento</th><th>Lato</th><th class="n">Ingresso</th><th class="n">Uscita</th><th class="n">Qtà</th><th class="n">Risultato</th><th>Note</th><th></th></tr></thead><tbody>'+rows+'</tbody></table>';
 }
@@ -2475,6 +2483,34 @@ $("main").addEventListener("click",async function(e){
   if(nav){calSel=null;calMonth=new Date(calMonth.getFullYear(),calMonth.getMonth()+(+nav.getAttribute("data-nav")),1);renderCalendario()}
 });
 
+/* Foto delle operazioni */
+var tradeFiles=[];
+function renderTradeFiles(){
+  $("tradeFiles").innerHTML=tradeFiles.map(function(f,i){
+    return '<div class="cm-file"><span>Foto · '+esc(f.name.slice(0,30))+'</span><button class="ghost" type="button" data-tfrm="'+i+'" aria-label="Rimuovi foto">×</button></div>';
+  }).join("");
+}
+$("tradeFile").addEventListener("change",function(){
+  Array.prototype.forEach.call(this.files,function(f){
+    if(tradeFiles.length>=3){ $("tradeMsg").textContent="Puoi allegare al massimo 3 foto."; return }
+    if(["image/jpeg","image/png","image/webp"].indexOf(f.type)<0){ $("tradeMsg").textContent="Usa immagini JPG, PNG o WebP."; return }
+    if(f.size>5*1024*1024){ $("tradeMsg").textContent="Una foto supera i 5 MB."; return }
+    tradeFiles.push(f);
+  });
+  this.value="";
+  renderTradeFiles();
+});
+$("tradeFiles").addEventListener("click",function(e){
+  var b=e.target.closest("[data-tfrm]"); if(!b) return;
+  tradeFiles.splice(+b.getAttribute("data-tfrm"),1); renderTradeFiles();
+});
+$("main").addEventListener("click",async function(e){
+  var ph=e.target.closest("[data-photo]"); if(!ph) return;
+  var su=await sb.storage.from("trade-screens").createSignedUrl(ph.getAttribute("data-photo"),600);
+  if(su.error||!su.data){ alert("Foto non disponibile."); return }
+  window.open(su.data.signedUrl,"_blank","noopener");
+});
+
 /* Operazione reale */
 $("tradeForm").addEventListener("submit",async function(e){
   e.preventDefault();
@@ -2486,10 +2522,19 @@ $("tradeForm").addEventListener("submit",async function(e){
   var row={user_id:user.id,trade_date:$("date").value,symbol:sym,
     direction:document.querySelector('input[name="dir"]:checked').value,
     entry_price:entry,exit_price:exit,size:size,fees:fees,note:$("note").value.trim()};
+  var paths=[];
+  for(var fi=0;fi<tradeFiles.length;fi++){
+    var tf=tradeFiles[fi],ext=tf.type==="image/png"?"png":tf.type==="image/webp"?"webp":"jpg";
+    var pth=user.id+"/"+Date.now()+"-"+fi+"."+ext;
+    var upf=await sb.storage.from("trade-screens").upload(pth,tf,{contentType:tf.type});
+    if(upf.error){ $("saveBtn").disabled=false; $("tradeMsg").textContent="Foto non caricata: "+upf.error.message; return }
+    paths.push(pth);
+  }
+  row.screenshot_paths=paths;
   var r=await sb.from("trades").insert(row).select().single();
   $("saveBtn").disabled=false;
   if(r.error){$("tradeMsg").textContent="Salvataggio non riuscito: "+r.error.message;return}
-  trades.push(r.data);renderCurrent();refreshRank();
+  trades.push(r.data);tradeFiles=[];renderTradeFiles();renderCurrent();refreshRank();
   ["sym","entry","exit","size","note"].forEach(function(i){$(i).value=""});$("sym").focus();
 });
 
