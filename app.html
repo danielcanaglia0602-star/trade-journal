@@ -225,6 +225,43 @@ button.ghost{padding:7px 14px;background:transparent}
 .bt-acc>div{background:color-mix(in srgb,var(--accent) 5%,transparent);border-radius:var(--r-sm);padding:10px 12px}
 .sum{border-radius:var(--r-md)}
 table th{font-weight:600}
+
+.bt-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.bt-grid2{display:grid;grid-template-columns:380px minmax(0,1fr);gap:18px;align-items:start}
+.bt-grid2 .panel{margin-bottom:0}
+.tvx-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;border:1px solid var(--line);border-radius:18px 18px 0 0;background:var(--panel);flex-wrap:wrap}
+.tvx-bar .spacer{flex:1}
+.tvx-title{font-size:16px;margin-right:6px}
+.tvx-ind{display:flex;gap:6px;flex-wrap:wrap}
+.tvx-sel{width:auto;padding:6px 10px;border-radius:999px}
+.tvx{display:grid;grid-template-columns:64px minmax(0,1fr) 340px;border:1px solid var(--line);border-top:0;border-radius:0 0 18px 18px;background:var(--panel);min-height:660px;overflow:hidden}
+.bt-vtools{flex-direction:column;align-items:center;justify-content:flex-start;gap:8px;padding:12px 8px;border-right:1px solid var(--line);background:var(--panel)}
+.bt-vtools button{width:48px;height:48px;padding:0;font-size:11px;border-radius:14px;display:grid;place-items:center}
+.tvx-center{position:relative;min-width:0;display:flex;flex-direction:column;border:0;border-radius:0}
+#btChart{width:100%;height:540px}
+.tvx-range{display:flex;gap:4px;padding:8px 10px;border-top:1px solid var(--line);flex-wrap:wrap}
+.tvx-range button{padding:5px 10px;font-size:12px;border-radius:999px}
+.tvx-range button:hover{border-color:var(--ink)}
+.tvx-right{border-left:1px solid var(--line);padding:14px;overflow-y:auto;background:var(--panel);min-width:0}
+.replay-bar{display:flex;gap:6px;align-items:center;padding:8px;border-radius:999px;background:var(--bg);border:1px solid var(--line);margin:12px 0 6px}
+.replay-bar .play{min-width:46px;border-radius:999px}
+.replay-bar button{padding:7px 10px}
+.replay-bar select{width:auto;border-radius:999px;padding:6px 8px}
+.when{font-size:12px;color:var(--mute);min-height:16px;margin-bottom:10px;word-break:break-word}
+.btn.wide{width:100%;margin-bottom:12px}
+#btTicket{margin-bottom:12px;padding:12px;border:1px solid var(--line);border-radius:18px;background:var(--bg)}
+.sess-name{color:var(--gain);font-weight:700}
+.sess-arrow{width:30px;height:30px;padding:0;border-radius:50%;display:inline-grid;place-items:center;margin-right:8px;font-size:16px;line-height:1}
+.sess-detail td{background:var(--bg)}
+@media (max-width:1100px){
+  .tvx{grid-template-columns:56px minmax(0,1fr)}
+  .tvx-right{grid-column:1 / -1;border-left:0;border-top:1px solid var(--line)}
+  .bt-grid2{grid-template-columns:1fr}
+}
+@media (max-width:700px){
+  .tvx{grid-template-columns:1fr}
+  .bt-vtools{flex-direction:row;border-right:0;border-bottom:1px solid var(--line);overflow-x:auto}
+}
 </style>
 </head>
 <body>
@@ -295,15 +332,17 @@ table th{font-weight:600}
 
     <section id="v-backtest" class="view hidden">
       <div id="btSetupView">
-        <h1>Backtest</h1>
-        <p class="sub">Scegli il mercato, il capitale e la data di partenza, poi avvia la sessione.</p>
-        <div class="bt-setup-grid">
+        <div class="bt-head">
+          <h1>Backtest</h1>
+          <button class="btn" type="button" id="btAddTrade">+ Aggiungi Trade</button>
+        </div>
+        <div class="bt-grid2">
           <section class="panel">
             <h2>Nuova sessione</h2>
             <label>Pair del backtest
               <select id="btSym"><option value="BTCUSDT">BTCUSDT</option><option value="ETHUSDT">ETHUSDT</option><option value="SOLUSDT">SOLUSDT</option><option value="BNBUSDT">BNBUSDT</option><option value="XRPUSDT">XRPUSDT</option><option value="AUD/CAD">AUD/CAD</option><option value="AUD/USD">AUD/USD</option><option value="EUR/USD">EUR/USD</option><option value="GBP/USD">GBP/USD</option><option value="USD/JPY">USD/JPY</option><option value="USD/CAD">USD/CAD</option><option value="NZD/USD">NZD/USD</option><option value="EUR/JPY">EUR/JPY</option><option value="GBP/JPY">GBP/JPY</option><option value="XAU/USD">XAU/USD</option><option value="XAG/USD">XAG/USD</option></select>
             </label>
-            <label style="margin-top:10px">Timeframe
+            <label style="margin-top:12px">Timeframe
               <select id="btTf">
                 <option value="1m">1 minuto</option><option value="5m">5 minuti</option><option value="15m">15 minuti</option>
                 <option value="1h" selected>1 ora</option><option value="4h">4 ore</option><option value="1d">1 giorno</option>
@@ -311,7 +350,7 @@ table th{font-weight:600}
             </label>
             <div class="cap-wrap">
               <div class="cap-tip" id="btCapTip">Balance: $100,000</div>
-              <input type="range" id="btCapSlider" min="10000" max="1000000" step="10000" value="100000" aria-label="Capitale iniziale">
+              <input type="range" id="btCapSlider" min="1000" max="1000000" step="1000" value="100000" aria-label="Balance iniziale">
               <div class="cap-marks"><span>10k</span><span>100k</span><span>1mil</span></div>
             </div>
             <label>Data di inizio<input type="date" id="btStart" value="2024-01-01"></label>
@@ -319,8 +358,9 @@ table th{font-weight:600}
               <div><span>Pair</span><b id="btSumPair">BTCUSDT</b></div>
               <div><span>Data di inizio</span><b id="btSumDate">01/01/2024</b></div>
               <div><span>Balance</span><b id="btSumBal">$100,000</b></div>
+              <div><span>Stato del servizio</span><b>Disponibile</b></div>
             </div>
-            <button class="btn" type="button" id="btStartBtn" style="width:100%">Inizia nuova sessione</button>
+            <button class="btn" type="button" id="btStartBtn" style="width:100%">Inizia Nuova Sessione</button>
             <div class="msg" id="btMsg" role="alert" style="margin-top:10px"></div>
           </section>
           <section class="panel">
@@ -331,90 +371,94 @@ table th{font-weight:600}
       </div>
 
       <div id="btSessionView" class="hidden">
-        <div class="bt-top">
+        <div class="tvx-bar">
           <button class="ghost" id="btBack" type="button">← Sessioni</button>
-          <b id="btTitle" style="font-size:16px"></b>
-        </div>
-      <div class="bt-wrap">
-        <div>
-          <div class="bt-tools">
-            <button type="button" data-tool="cursor" class="on">Cursore</button>
-            <button type="button" data-tool="hline">Linea (H)</button>
-            <button type="button" data-tool="trend">Trendline (T)</button>
-            <button type="button" data-tool="fib">Fibonacci (F)</button>
-            <button type="button" data-tool="measure">Misura (M)</button>
-            <button type="button" id="btClearDraw">Pulisci disegni</button>
-            <button type="button" id="btFull">Schermo intero</button>
-            <select id="btTheme" aria-label="Tema del grafico">
-              <option value="scuro">Tema scuro</option><option value="notte">Tema notte</option><option value="chiaro">Tema chiaro</option>
-            </select>
-          </div>
-          <div class="bt-tools">
+          <b id="btTitle" class="tvx-title"></b>
+          <div class="bt-tools tvx-ind">
             <button type="button" data-ind="sma20" class="on">Media 20</button>
             <button type="button" data-ind="sma50">Media 50</button>
             <button type="button" data-ind="ema20">EMA 20</button>
             <button type="button" data-ind="bb">Bollinger</button>
             <button type="button" data-ind="vwap">VWAP</button>
-            <button type="button" data-ind="rsi">RSI 14</button>
+            <button type="button" data-ind="rsi">RSI</button>
             <button type="button" data-ind="vol" class="on">Volumi</button>
           </div>
-          <div class="bt-measure" id="btMeasure"></div>
-          <div class="bt-chartwrap" id="btWrap">
-            <div class="bt-legend" id="btLegend"></div>
-            <div id="btChart"><div class="empty" style="padding-top:200px">Scegli mercato, data e capitale, poi premi Avvia sessione.</div></div>
-            <div class="bt-rsi hidden" id="btRsi"></div>
+          <span class="spacer"></span>
+          <select id="btTheme" aria-label="Tema del grafico" class="tvx-sel">
+            <option value="scuro">Tema scuro</option><option value="notte">Tema notte</option><option value="chiaro">Tema chiaro</option>
+          </select>
+          <button class="ghost" type="button" id="btFull">Schermo intero</button>
+        </div>
+        <div class="tvx">
+          <div class="bt-tools bt-vtools" role="toolbar" aria-label="Strumenti di disegno">
+            <button type="button" data-tool="cursor" class="on" title="Cursore">Cursore</button>
+            <button type="button" data-tool="hline" title="Linea orizzontale (H)">Linea</button>
+            <button type="button" data-tool="trend" title="Trendline (T)">Trend</button>
+            <button type="button" data-tool="fib" title="Fibonacci (F)">Fib</button>
+            <button type="button" data-tool="measure" title="Misura (M)">Misura</button>
+            <button type="button" id="btClearDraw" title="Pulisci disegni">Pulisci</button>
           </div>
-          <div class="bt-ctrl">
-            <button class="play" id="btPlay" type="button" disabled>▶</button>
-            <button class="ghost" id="btStep" type="button" disabled>+1</button>
-            <button class="ghost" id="btStep5" type="button" disabled>+5</button>
-            <button class="ghost" id="btStep20" type="button" disabled>+20</button>
-            <label style="margin-left:6px">Velocità
-              <select id="btSpeed" style="width:auto">
+          <div class="tvx-center bt-chartwrap" id="btWrap">
+            <div class="bt-legend" id="btLegend"></div>
+            <div class="bt-measure" id="btMeasure"></div>
+            <div id="btChart"><div class="empty" style="padding-top:200px">Scegli mercato, data e capitale, poi premi Inizia Nuova Sessione.</div></div>
+            <div class="bt-rsi hidden" id="btRsi"></div>
+            <div class="tvx-range">
+              <button type="button" data-range="5y">5y</button><button type="button" data-range="1y">1y</button>
+              <button type="button" data-range="6m">6m</button><button type="button" data-range="3m">3m</button>
+              <button type="button" data-range="1m">1m</button><button type="button" data-range="5d">5d</button>
+              <button type="button" data-range="1d">1d</button><button type="button" data-range="auto">Auto</button>
+            </div>
+          </div>
+          <aside class="tvx-right">
+            <div class="bt-acc">
+              <div><span>Balance</span><b id="btBal">—</b></div>
+              <div><span>Equity</span><b id="btEq">—</b></div>
+              <div><span>P&amp;L aperto</span><b id="btOpen">—</b></div>
+              <div><span>P&amp;L totale</span><b id="btTot">—</b></div>
+            </div>
+            <div class="replay-bar">
+              <select id="btSpeed" aria-label="Velocità" class="tvx-sel">
                 <option value="900">Lenta</option><option value="450" selected>Media</option><option value="180">Veloce</option>
               </select>
-            </label>
+              <button class="play" id="btPlay" type="button" disabled>▶</button>
+              <button class="ghost" id="btStep" type="button" disabled>+1</button>
+              <button class="ghost" id="btStep5" type="button" disabled>+5</button>
+              <button class="ghost" id="btStep20" type="button" disabled>+20</button>
+            </div>
             <div class="when" id="btWhen"></div>
-          </div>
+            <button class="btn wide" type="button" id="btNewOrder">+ Nuovo Ordine</button>
+            <div id="btTicket" class="hidden">
+              <div class="side-btns">
+                <button class="l" id="btBuy" type="button" disabled>Long</button>
+                <button class="s" id="btSell" type="button" disabled>Short</button>
+              </div>
+              <div class="row" style="gap:8px">
+                <label>Tipo ordine
+                  <select id="btType">
+                    <option value="market">Mercato</option>
+                    <option value="limit">Limite</option>
+                    <option value="stop">Stop</option>
+                  </select>
+                </label>
+                <label>Prezzo ordine<input type="number" id="btPrice" step="any" placeholder="—" disabled></label>
+              </div>
+              <div class="row" style="gap:8px;margin-top:8px">
+                <label>Quantità<input type="number" id="btQty" value="1" min="0.0001" step="any"></label>
+                <label>Stop loss<input type="number" id="btSl" step="any" placeholder="—"></label>
+              </div>
+              <label style="margin-top:8px">Take profit<input type="number" id="btTp" step="any" placeholder="—"></label>
+              <div class="msg" id="btOrderMsg" role="alert"></div>
+              <button class="ghost" id="btClose" type="button" disabled style="width:100%;margin-top:8px">Chiudi posizione al prezzo attuale</button>
+            </div>
+            <div class="tabs">
+              <button class="on" id="btTabPos" type="button">Trading</button>
+              <button id="btTabOrd" type="button">Ordini</button>
+              <button id="btTabHist" type="button">Storico</button>
+            </div>
+            <div id="btTabBody"><div class="empty">Nessun ordine</div></div>
+          </aside>
         </div>
-
-        <aside class="panel">
-          <div class="bt-acc">
-            <div><span>Saldo</span><b id="btBal">—</b></div>
-            <div><span>Equity</span><b id="btEq">—</b></div>
-            <div><span>P&amp;L aperto</span><b id="btOpen">—</b></div>
-            <div><span>P&amp;L totale</span><b id="btTot">—</b></div>
-          </div>
-          <div class="side-btns">
-            <button class="l" id="btBuy" type="button" disabled>Long</button>
-            <button class="s" id="btSell" type="button" disabled>Short</button>
-          </div>
-          <div class="row" style="gap:8px">
-            <label>Tipo ordine
-              <select id="btType">
-                <option value="market">Mercato</option>
-                <option value="limit">Limite</option>
-                <option value="stop">Stop</option>
-              </select>
-            </label>
-            <label>Prezzo ordine<input type="number" id="btPrice" step="any" placeholder="—" disabled></label>
-          </div>
-          <div class="row" style="gap:8px;margin-top:8px">
-            <label>Quantità<input type="number" id="btQty" value="1" min="0.0001" step="any"></label>
-            <label>Stop loss<input type="number" id="btSl" step="any" placeholder="—"></label>
-          </div>
-          <label style="margin-top:8px">Take profit<input type="number" id="btTp" step="any" placeholder="—"></label>
-          <div class="msg" id="btOrderMsg" role="alert"></div>
-          <button class="ghost" id="btClose" type="button" disabled style="width:100%;margin-top:8px">Chiudi posizione al prezzo attuale</button>
-          <div class="tabs">
-            <button class="on" id="btTabPos" type="button">Posizione</button>
-            <button id="btTabOrd" type="button">Ordini</button>
-            <button id="btTabHist" type="button">Storico</button>
-          </div>
-          <div id="btTabBody"><div class="empty">Nessuna posizione aperta.</div></div>
-        </aside>
-      </div>
-
       </div>
     </section>
 
@@ -989,7 +1033,7 @@ function cancelOrder(id){
 function renderBtTabs(){
   var tb=$("btTabBody");
   if(bTab==="pos"){
-    if(!bPos){tb.innerHTML='<div class="empty">Nessuna posizione aperta.</div>';return}
+    if(!bPos){tb.innerHTML='<div class="empty"><b>Nessun ordine</b><br><span style="font-size:13px">Aggiungi il tuo primo trade con il pulsante "+ Nuovo Ordine" o disegnando sul grafico.</span></div>';return}
     var u=bUnreal();
     tb.innerHTML='<table class="mini"><thead><tr><th>Lato</th><th class="n">Qtà</th><th class="n">Entrata</th><th class="n">P&amp;L</th></tr></thead><tbody><tr>'+
       '<td class="'+(bPos.side==="long"?"pos":"neg")+'">'+(bPos.side==="long"?"Long":"Short")+'</td><td class="n">'+fmt(bPos.qty,4)+'</td><td class="n">'+fmt(bPos.entry,4)+'</td><td class="n '+cls(u)+'">'+sgn(u)+'</td></tr></tbody></table>'+
@@ -1038,17 +1082,33 @@ function relTime(iso){
   if(d<30) return d+" giorni fa";
   return Math.floor(d/30)+" mesi fa";
 }
+var btExpanded={};
+function durataText(b){
+  var trs=sessionTrades(b.id);
+  var start=new Date(b.created_at).getTime();
+  var last=trs.reduce(function(m,t){return Math.max(m,new Date(t.created_at).getTime())},start);
+  var m=Math.round((last-start)/60000);
+  if(m<60) return m+" minuti";
+  return Math.floor(m/60)+" ore";
+}
 function renderSessions(){
   if(btErr){$("btSessions").innerHTML='<div class="empty">Per usare le sessioni esegui lo script SQL aggiornato su Supabase.</div>';return}
   if(!backtests.length){$("btSessions").innerHTML='<div class="empty">Nessuna sessione ancora. Creane una a sinistra.</div>';return}
-  var rows=backtests.map(function(b){
-    var list=sessionTrades(b.id),st=stats(list),realized=list.reduce(function(a,t){return a+pnl(t)},0);
-    return '<tr><td><b style="color:var(--gain)">'+esc(b.symbol||b.name)+'</b></td><td class="n">'+st.n+'</td>'+
-      '<td class="n">$'+fmt(b.capital+realized)+'</td><td>'+relTime(b.created_at)+'</td>'+
-      '<td class="n"><button class="ghost" type="button" data-open="'+esc(b.id)+'">Apri</button> '+
-      '<button class="ghost" type="button" data-delbt="'+esc(b.id)+'">Elimina</button></td></tr>';
+  var html=backtests.map(function(b){
+    var list=sessionTrades(b.id),st=stats(list),realized=list.reduce(function(a,t){return a+pnl(t)},0),open=!!btExpanded[b.id];
+    var row='<tr><td><button class="ghost sess-arrow" type="button" data-exp="'+esc(b.id)+'" aria-expanded="'+open+'">'+(open?"⌄":"›")+'</button><span class="sess-name">'+esc(b.symbol||b.name)+'</span></td>'+
+      '<td class="n">'+st.n+'</td><td class="n">$'+fmt(b.capital+realized)+'</td><td>'+durataText(b)+'</td><td>'+relTime(b.created_at)+'</td>'+
+      '<td class="n"><button class="ghost" type="button" data-open="'+esc(b.id)+'">Apri</button> <button class="ghost" type="button" data-delbt="'+esc(b.id)+'">Elimina</button></td></tr>';
+    var det='';
+    if(open){
+      var inner=list.length?'<table class="mini"><thead><tr><th>Data</th><th>Lato</th><th class="n">Entrata</th><th class="n">Uscita</th><th class="n">Risultato</th></tr></thead><tbody>'+
+        sortTrades(list).reverse().map(function(t){var p=pnl(t);return '<tr><td>'+dmy(t.trade_date)+'</td><td class="'+(t.direction==="long"?"pos":"neg")+'">'+(t.direction==="long"?"Long":"Short")+'</td><td class="n">'+fmt(t.entry_price,4)+'</td><td class="n">'+fmt(t.exit_price,4)+'</td><td class="n '+cls(p)+'">'+sgn(p)+'</td></tr>'}).join("")+'</tbody></table>'
+        :'<span class="muted">Nessuna operazione chiusa in questa sessione.</span>';
+      det='<tr class="sess-detail"><td colspan="6">'+inner+'</td></tr>';
+    }
+    return row+det;
   }).join("");
-  $("btSessions").innerHTML='<table class="sess"><thead><tr><th>Pair</th><th class="n">Trade</th><th class="n">Balance</th><th>Ultimo utilizzo</th><th></th></tr></thead><tbody>'+rows+'</tbody></table>';
+  $("btSessions").innerHTML='<table class="sess"><thead><tr><th>Pair</th><th class="n">Numero di trade</th><th class="n">Balance</th><th>Durata sessione</th><th>Ultimo utilizzo</th><th></th></tr></thead><tbody>'+html+'</tbody></table>';
 }
 async function startSession(){
   $("btMsg").textContent="";$("btMsg").classList.remove("ok");
@@ -1069,7 +1129,7 @@ async function startSession(){
   }catch(err){
     $("btMsg").textContent=err.message||"Errore di caricamento.";
   }finally{
-    $("btStartBtn").disabled=false;$("btStartBtn").textContent="Avvia sessione";
+    $("btStartBtn").disabled=false;$("btStartBtn").textContent="Inizia Nuova Sessione";
   }
 }
 function activate(session,res,cap,bal){
@@ -1398,6 +1458,27 @@ $("btSym").addEventListener("change",updateSetup);
 $("btStart").addEventListener("change",updateSetup);
 $("btBack").addEventListener("click",function(){stopAll();showBtView("setup")});
 updateSetup();
+
+/* Backtest: intervalli, ordine, espansione sessioni */
+function setRange(r){
+  if(!bChart||!bAll.length) return;
+  if(r==="auto"){ bChart.timeScale().fitContent(); return }
+  var sec={"5y":5*365*86400,"1y":365*86400,"6m":182*86400,"3m":91*86400,"1m":30*86400,"5d":5*86400,"1d":86400}[r]||86400;
+  var last=bAll[bCur].t;
+  bChart.timeScale().setVisibleRange({from:last-sec,to:last});
+}
+document.querySelectorAll("[data-range]").forEach(function(b){
+  b.addEventListener("click",function(){setRange(b.getAttribute("data-range"))});
+});
+$("btNewOrder").addEventListener("click",function(){ $("btTicket").classList.toggle("hidden") });
+$("btAddTrade").addEventListener("click",function(){ setView("operazioni") });
+$("btSessions").addEventListener("click",function(e){
+  var t=e.target.closest("[data-exp]");
+  if(!t) return;
+  var id=t.getAttribute("data-exp");
+  btExpanded[id]=!btExpanded[id];
+  renderSessions();
+});
 
 /* Backtest: strumenti */
 $("btStartBtn").addEventListener("click",startSession);
