@@ -717,6 +717,31 @@ th:last-child,td:last-child{padding-right:14px}
 .op-form .seg{margin:2px 0}
 .op-form button.btn{width:100%}
 @media (max-width:1000px){.op-layout{grid-template-columns:1fr}}
+
+/* Giornata */
+.g-head{display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.g-head .g-sp{flex:1}
+.g-title{margin:2px 0 0;text-transform:capitalize;font-size:22px}
+.g-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:18px;align-items:start}
+.g-col{display:flex;flex-direction:column;gap:18px;min-width:0}
+.g-note{margin:-6px 0 14px;font-size:13px}
+.g-empty{border:1px dashed var(--line);border-radius:14px;padding:16px;color:var(--mute);font-size:14px;margin-bottom:12px}
+.g-list{list-style:none;padding:0;margin:0 0 12px;display:grid;gap:8px}
+.g-list li{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:14px;background:color-mix(in srgb,var(--bg) 60%,transparent)}
+.g-list li.done span{text-decoration:line-through;color:var(--mute)}
+.g-chk{display:flex;align-items:center;gap:10px;font-size:15px;text-transform:none;letter-spacing:0;font-weight:400;color:var(--ink);cursor:pointer;flex:1;margin:0}
+.g-chk input{width:auto;accent-color:var(--gain)}
+.g-del{padding:2px 10px;border-radius:999px;line-height:1.3}
+.g-add{display:flex;gap:10px}
+.g-add input{flex:1}
+.g-add .btn{white-space:nowrap}
+.g-moods{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:8px 0 16px}
+.g-mood{display:grid;gap:2px;justify-items:center;padding:10px 4px;border-radius:14px;border:1px solid var(--line);background:transparent;color:var(--mute)}
+.g-mood b{font:700 18px var(--font-title);color:inherit}
+.g-mood small{font-size:11px}
+.g-mood.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--ink)}
+.g-area{margin-top:12px}
+@media (max-width:900px){.g-grid{grid-template-columns:1fr}.g-moods{grid-template-columns:repeat(5,1fr)}}
 </style>
 </head>
 <body>
@@ -1402,11 +1427,124 @@ function renderDashboard(){
 }
 
 /* Giornata, calendario, operazioni */
-function renderOggi(){
-  var t=today(),list=trades.filter(function(x){return x.trade_date===t});
-  $("v-oggi").innerHTML='<h1>Giornata</h1><p class="sub">Oggi, '+dmy(t)+'</p>'+statGrid(stats(list))+
-    '<section class="panel"><h2>Operazioni di oggi</h2><div class="tablewrap">'+tableHTML(list)+'</div></section>';
+var gDate=null,gJ=null,gTimer=null;
+function jEmpty(){ return {mood:null,plan:"",during:"",after:"",lessons:"",checklist:[],todos:[]} }
+function dayTitle(d){ return new Date(d+"T12:00:00").toLocaleDateString("it-IT",{weekday:"long",day:"numeric",month:"long"}) }
+function shiftDay(n){ var d=parse(gDate); d.setDate(d.getDate()+n); gDate=ymd(d); loadGiornata() }
+async function loadGiornata(){
+  if(!gDate) gDate=today();
+  if(!user||!sb){ gJ=jEmpty(); renderOggi(); return }
+  var r=await sb.from("day_journal").select("*").eq("user_id",user.id).eq("entry_date",gDate).maybeSingle();
+  var d=r.data;
+  gJ=d?{mood:d.mood,plan:d.plan||"",during:d.during||"",after:d.after||"",lessons:d.lessons||"",checklist:d.checklist||[],todos:d.todos||[]}:jEmpty();
+  renderOggi();
 }
+function persistGiornata(){ clearTimeout(gTimer); gTimer=setTimeout(saveGiornata,400) }
+async function saveGiornata(){
+  if(!user||!gJ) return;
+  var r=await sb.from("day_journal").upsert({user_id:user.id,entry_date:gDate,mood:gJ.mood,plan:gJ.plan,during:gJ.during,
+    after:gJ.after,lessons:gJ.lessons,checklist:gJ.checklist,todos:gJ.todos},{onConflict:"user_id,entry_date"});
+  var m=document.getElementById("gMsg");
+  if(m){ m.classList.toggle("ok",!r.error); m.textContent=r.error?"Salvataggio non riuscito: "+r.error.message:"Salvato"; }
+}
+function gCard(label,val,sub,c){
+  return '<div class="stat"><span>'+label+'</span><b class="'+(c||"")+'">'+val+'</b>'+(sub?'<small class="muted" style="font-size:12px">'+sub+'</small>':'')+'</div>';
+}
+function gList(arr,kind){
+  if(!arr.length) return '<div class="g-empty">Nessuna voce ancora.</div>';
+  return '<ul class="g-list">'+arr.map(function(x,i){
+    return '<li class="'+(x.done?"done":"")+'"><label class="g-chk"><input type="checkbox" data-tog="'+kind+'" data-i="'+i+'"'+(x.done?' checked':'')+'><span>'+esc(x.text)+'</span></label>'+
+      '<button class="ghost g-del" type="button" data-delitem="'+kind+'" data-i="'+i+'" aria-label="Elimina voce">×</button></li>';
+  }).join("")+'</ul>';
+}
+function gArea(id,label,ph,val){
+  return '<label class="g-area">'+label+'<textarea id="'+id+'" rows="3" maxlength="4000" placeholder="'+esc(ph)+'">'+esc(val)+'</textarea></label>';
+}
+function renderOggi(){
+  if(!gDate) gDate=today();
+  if(!gJ) gJ=jEmpty();
+  var dt=trades.filter(function(t){return t.trade_date===gDate}),st=stats(dt);
+  var ck=gJ.checklist,ckDone=ck.filter(function(x){return x.done}).length;
+  var moods=["Pessimo","Giù","Normale","Bene","Ottimo"];
+  $("v-oggi").innerHTML=
+    '<h1>La mia giornata</h1><p class="sub">Prepara la sessione, segui la checklist e tieni traccia di quello che fai.</p>'+
+    '<section class="panel g-head"><button class="ghost" type="button" data-gday="-1" aria-label="Giorno precedente">‹</button>'+
+      '<div><span class="lab">'+(gDate===today()?"Oggi":"Giorno")+'</span><h2 class="g-title">'+esc(dayTitle(gDate))+'</h2></div>'+
+      '<span class="g-sp"></span><button class="ghost" type="button" data-gday="1" aria-label="Giorno successivo">›</button>'+
+      '<button class="ghost" type="button" data-gday="0">Oggi</button>'+
+      '<input type="date" id="gDatePick" value="'+esc(gDate)+'" style="width:auto"></section>'+
+    '<div class="stats">'+
+      gCard("Trade chiusi",st.n||0,st.n?"":"Nessuno in questo giorno")+
+      gCard("P&amp;L netto",st.n?sgn(st.net):"—",st.n?"":"Nessun risultato",st.n?cls(st.net):"")+
+      gCard("Win rate",st.n?fmt(st.winrate,0)+"%":"—",st.n?st.wins+" su "+st.n:"")+
+      gCard("Checklist",ck.length?ckDone+"/"+ck.length:"—",ck.length?"Voci completate":"Nessuna voce")+
+      gCard("Umore",gJ.mood?moods[gJ.mood-1]:"—","")+
+    '</div>'+
+    '<div class="g-grid"><div class="g-col">'+
+      '<section class="panel"><h2>Checklist pre-trading</h2><p class="muted g-note">Le domande da farti prima di aprire una posizione.</p>'+
+        gList(ck,"ck")+
+        '<div class="g-add"><input id="gCkNew" placeholder="Es. Il setup rispetta il piano?" maxlength="160"><button class="btn" type="button" data-add="ck">Aggiungi</button></div></section>'+
+      '<section class="panel"><h2>Cose da fare</h2>'+
+        gList(gJ.todos,"td")+
+        '<div class="g-add"><input id="gTdNew" placeholder="Nuova cosa da fare" maxlength="160"><button class="btn" type="button" data-add="td">Aggiungi</button></div></section>'+
+    '</div><div class="g-col">'+
+      '<section class="panel"><h2>Diario del giorno</h2>'+
+        '<span class="lab">Umore di oggi</span><div class="g-moods">'+
+        moods.map(function(m,i){return '<button type="button" class="g-mood'+(gJ.mood===i+1?' on':'')+'" data-mood="'+(i+1)+'"><b>'+(i+1)+'</b><small>'+m+'</small></button>'}).join("")+
+        '</div>'+
+        gArea("gPlan","Piano pre-mercato","Livelli, scenari, cosa aspetti e cosa NON farai.",gJ.plan)+
+        gArea("gDuring","Durante la sessione","Decisioni, emozioni, errori mentre operi.",gJ.during)+
+        gArea("gAfter","Dopo la sessione","Cosa è andato bene e cosa cambieresti.",gJ.after)+
+        gArea("gLessons","Lezioni","Una cosa da ricordare domani.",gJ.lessons)+
+        '<div class="msg" id="gMsg" role="status" style="margin-top:10px"></div>'+
+      '</section>'+
+    '</div></div>';
+}
+$("v-oggi").addEventListener("click",function(e){
+  var t=e.target.closest("[data-gday],[data-mood],[data-add],[data-delitem]");
+  if(!t) return;
+  if(t.hasAttribute("data-gday")){
+    var n=+t.getAttribute("data-gday");
+    if(n===0){ gDate=today(); loadGiornata() } else shiftDay(n);
+    return;
+  }
+  if(t.hasAttribute("data-mood")){ gJ.mood=+t.getAttribute("data-mood"); renderOggi(); persistGiornata(); return }
+  if(t.hasAttribute("data-add")){
+    var kind=t.getAttribute("data-add"),inp=$(kind==="ck"?"gCkNew":"gTdNew"),txt=inp.value.trim();
+    if(!txt) return;
+    var arr=kind==="ck"?gJ.checklist:gJ.todos;
+    arr.push({text:txt.slice(0,160),done:false});
+    renderOggi(); persistGiornata();
+    $(kind==="ck"?"gCkNew":"gTdNew").focus();
+    return;
+  }
+  if(t.hasAttribute("data-delitem")){
+    var k2=t.getAttribute("data-delitem"),i2=+t.getAttribute("data-i");
+    (k2==="ck"?gJ.checklist:gJ.todos).splice(i2,1);
+    renderOggi(); persistGiornata();
+  }
+});
+$("v-oggi").addEventListener("change",function(e){
+  var t=e.target;
+  if(t.id==="gDatePick"){ if(t.value){ gDate=t.value; loadGiornata() } return }
+  if(t.hasAttribute("data-tog")){
+    var k=t.getAttribute("data-tog"),i=+t.getAttribute("data-i"),arr=k==="ck"?gJ.checklist:gJ.todos;
+    if(arr[i]) arr[i].done=t.checked;
+    renderOggi(); persistGiornata();
+  }
+});
+$("v-oggi").addEventListener("input",function(e){
+  var t=e.target,map={gPlan:"plan",gDuring:"during",gAfter:"after",gLessons:"lessons"};
+  if(map[t.id]){ gJ[map[t.id]]=t.value; persistGiornata() }
+});
+$("v-oggi").addEventListener("keydown",function(e){
+  if(e.key!=="Enter") return;
+  if(e.target.id==="gCkNew"||e.target.id==="gTdNew"){
+    e.preventDefault();
+    var b=document.querySelector('[data-add="'+(e.target.id==="gCkNew"?"ck":"td")+'"]');
+    if(b) b.click();
+  }
+});
 function renderCalendario(){
   var y=calMonth.getFullYear(),m=calMonth.getMonth();
   var first=new Date(y,m,1),offset=(first.getDay()+6)%7,start=new Date(y,m,1-offset);
@@ -2054,7 +2192,7 @@ function renderImpostazioni(){ fillPrefs();
 }
 function renderCurrent(){
   if(view==="dashboard") renderDashboard();
-  if(view==="oggi") renderOggi();
+  if(view==="oggi") loadGiornata();
   if(view==="calendario") renderCalendario();
   if(view==="operazioni") renderOperazioni();
   if(view==="backtest") renderBacktest();
