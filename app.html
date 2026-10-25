@@ -6,7 +6,10 @@
 <meta name="robots" content="noindex">
 <title>TradeDiario</title>
 <style>
-:root{--font-title:"Hiragino Kaku Gothic StdN","Hiragino Sans","Yu Gothic UI","Segoe UI",var(--font-body);--font-body:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Segoe UI",var(--font-body);--r-sm:12px;--r-md:18px;--r-pill:999px;--bg:#f4f1ea;--side:#ebe7dd;--panel:#fbfaf6;--ink:#1a1d21;--mute:#5c6168;--line:#d9d4c7;--gain:#1d7a4f;--loss:#b03a3a;--accent:#1f4d3a;--accent-ink:#f4f1ea;--amber:#c98a1b;color-scheme:light;box-sizing:border-box}
+@font-face{font-family:"Garet";src:url("fonts/Garet-Book.woff2") format("woff2");font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:"Garet";src:url("fonts/Garet-Heavy.woff2") format("woff2");font-weight:700;font-style:normal;font-display:swap}
+@font-face{font-family:"TheBold";src:url("fonts/THEBOLDFONT-FREEVERSION.woff") format("woff");font-weight:700;font-style:normal;font-display:swap}
+:root{--font-title:"TheBold","Garet",system-ui,sans-serif;--font-body:"Garet",system-ui,sans-serif;--r-sm:12px;--r-md:18px;--r-pill:999px;--bg:#f4f1ea;--side:#ebe7dd;--panel:#fbfaf6;--ink:#1a1d21;--mute:#5c6168;--line:#d9d4c7;--gain:#1d7a4f;--loss:#b03a3a;--accent:#1f4d3a;--accent-ink:#f4f1ea;--amber:#c98a1b;color-scheme:light;box-sizing:border-box}
 @media (prefers-color-scheme:dark){:root{--bg:#121416;--side:#0d0f11;--panel:#1a1e21;--ink:#ecebe6;--mute:#9a9da2;--line:#2b2f33;--gain:#7fd1ae;--loss:#ff8a8a;--accent:#7fd1ae;--accent-ink:#121416;--amber:#e0a040;color-scheme:dark}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.5 var(--font-body);font-variant-numeric:tabular-nums}
