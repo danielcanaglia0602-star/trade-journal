@@ -302,6 +302,22 @@ body.bt-focus main{padding:0!important;max-width:none!important;height:100vh;ove
   .tvf-resizer{display:none}
   .tvf-panel{grid-column:1 / -1;border-top:1px solid var(--line);max-height:45vh}
 }
+
+.tvf-tools{align-items:center}
+.tvf-tools .tv-grp{width:42px;height:40px;padding:0;display:grid;place-items:center;border-radius:10px;border:1px solid transparent;background:transparent;color:var(--ink)}
+.tvf-tools .tv-grp:hover{border-color:var(--line);background:var(--panel)}
+.tvf-tools .tv-grp.on{background:var(--accent);color:var(--accent-ink)}
+.tvf-tools .tv-sep{width:26px;height:1px;background:var(--line);margin:4px 0}
+.tv-fly{position:fixed;z-index:300;min-width:300px;max-height:78vh;overflow-y:auto;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:0 18px 40px -12px rgba(0,0,0,.35);padding:6px}
+.tv-fly .sec{font-size:11px;letter-spacing:.06em;color:var(--mute);padding:10px 10px 4px}
+.tv-fly button{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:0;background:transparent;padding:7px 10px;border-radius:8px;font-size:13px;color:var(--ink);border-radius:8px}
+.tv-fly button:hover:not(.dis){background:var(--bg)}
+.tv-fly button.on{background:var(--accent);color:var(--accent-ink)}
+.tv-fly button.dis{opacity:.45;cursor:not-allowed}
+.tv-fly .sc{margin-left:auto;font-size:11px;color:var(--mute)}
+.tv-fly button.on .sc{color:var(--accent-ink)}
+.ico{flex:none}
+.hidden{display:none!important}
 </style>
 </head>
 <body>
@@ -443,19 +459,7 @@ body.bt-focus main{padding:0!important;max-width:none!important;height:100vh;ove
           <button class="ghost" type="button" id="btFull">Schermo intero</button>
         </header>
         <div class="tvf-body" id="tvfBody" data-collapsed="0">
-          <nav class="bt-tools tvf-tools" aria-label="Strumenti di disegno">
-            <button type="button" data-tool="cursor" class="on" title="Cursore">↖</button>
-            <button type="button" data-tool="hline" title="Linea orizzontale (H)">―</button>
-            <button type="button" data-tool="trend" title="Trendline (T)">╱</button>
-            <button type="button" data-tool="fib" title="Fibonacci (F)">Fib</button>
-            <button type="button" data-tool="text" title="Testo">T</button>
-            <button type="button" data-tool="measure" title="Misura (M)">⇔</button>
-            <button type="button" disabled title="Pennello: non disponibile in questa versione">✎</button>
-            <button type="button" id="btMagnet" title="Magnetismo: aggancia ai prezzi OHLC">Mag.</button>
-            <button type="button" id="btLock" title="Blocca i disegni">Blocca</button>
-            <button type="button" id="btVis" title="Mostra o nascondi i disegni">Vis.</button>
-            <button type="button" id="btClearDraw" title="Elimina tutti i disegni">Elimina</button>
-          </nav>
+          <nav class="bt-tools tvf-tools" id="btToolbar" aria-label="Strumenti di disegno"></nav>
           <section class="tvf-chart bt-chartwrap" id="btWrap">
             <div class="bt-legend" id="btLegend"></div>
             <div class="bt-measure" id="btMeasure"></div>
@@ -888,12 +892,23 @@ function onBtCross(p){
 }
 function setTool(t){
   TOOL=t;pendingPt=null;
-  document.querySelectorAll(".bt-tools [data-tool]").forEach(function(b){b.classList.toggle("on",b.getAttribute("data-tool")===t)});
-  var msgs={hline:"Clicca sul grafico per tracciare la linea.",text:"Clicca sul grafico per scrivere il testo.",trend:"Clicca il primo punto, poi il secondo.",fib:"Clicca il primo punto, poi il secondo.",measure:"Clicca il primo punto, poi il secondo per misurare."};
+  var f=itemById(t),grpId=f?f.g.g:null;
+  document.querySelectorAll("#btToolbar .tv-grp[data-g]").forEach(function(b){
+    var g=b.getAttribute("data-g");
+    b.classList.toggle("on",g===grpId);
+    b.innerHTML=toolIco(g===grpId&&f?f.item.icon:toolGroupIcon[g]);
+  });
+  var msgs={hline:"Clicca sul grafico per tracciare la linea orizzontale.",hray:"Clicca sul grafico per tracciare il raggio orizzontale.",
+    text:"Clicca sul grafico per scrivere il testo.",trend:"Clicca il primo punto, poi il secondo.",info:"Clicca il primo punto, poi il secondo.",
+    ray:"Clicca il primo punto, poi il secondo: il raggio prosegue a destra.",ext:"Clicca il primo punto, poi il secondo: la linea si estende in entrambe le direzioni.",
+    fibret:"Clicca il punto più basso, poi quello più alto.",fibext:"Clicca il primo punto, poi il secondo, per le estensioni.",
+    measure:"Clicca il primo punto, poi il secondo per misurare.",erase:"Clicca su un disegno per cancellare l'ultimo.",zoomin:"Clicca sul grafico per ingrandire.",zoomout:"Clicca sul grafico per ridurre."};
   if(msgs[t]) $("btMeasure").textContent=msgs[t];
 }
 function onBtClick(p){
   if(!p||!p.point||p.time===undefined||TOOL==="cursor") return;
+  if(TOOL==="zoomin"){ zoomBy(0.7); return }
+  if(TOOL==="zoomout"){ zoomBy(1.4); return }
   if(lockOn){ $("btMeasure").textContent="Disegni bloccati: sbloccali per modificarli."; return }
   var price=bC.coordinateToPrice(p.point.y);
   if(price==null) return;
@@ -902,17 +917,26 @@ function onBtClick(p){
     if(c){ price=[c.o,c.h,c.l,c.c].reduce(function(a,b){return Math.abs(b-price)<Math.abs(a-price)?b:a}) }
   }
   var pt={t:p.time,p:price};
-  if(TOOL==="hline"){ addDr({k:"h",p:price}); setTool("cursor"); return }
+  if(TOOL==="erase"){
+    if(dr.length){ undoStack.push(JSON.stringify(dr)); redoStack=[]; dr.pop(); saveDr(); renderDr() }
+    return;
+  }
+  if(TOOL==="hline"||TOOL==="hray"){ addDr({k:"h",p:price}); setTool("cursor"); return }
   if(TOOL==="text"){
     var txt=prompt("Testo da mostrare sul grafico:");
     if(txt&&txt.trim()) addDr({k:"txt",p:price,t:txt.trim().slice(0,60)});
     setTool("cursor"); return;
   }
+  var two=["trend","info","ray","ext","fibret","fibext","measure"];
+  if(two.indexOf(TOOL)<0) return;
   if(!pendingPt){ pendingPt=pt; $("btMeasure").textContent="Ora clicca il secondo punto."; return }
   var a=pendingPt; pendingPt=null;
   if(a.t===pt.t){ $("btMeasure").textContent="Scegli un punto diverso."; return }
-  if(TOOL==="trend") addDr({k:"t",a:a,b:pt});
-  if(TOOL==="fib") addDr({k:"f",a:a,b:pt});
+  if(TOOL==="trend"||TOOL==="info") addDr({k:"t",a:a,b:pt});
+  if(TOOL==="ray") addDr({k:"ray",a:a,b:pt});
+  if(TOOL==="ext") addDr({k:"ext",a:a,b:pt});
+  if(TOOL==="fibret") addDr({k:"f",a:a,b:pt});
+  if(TOOL==="fibext") addDr({k:"fx",a:a,b:pt});
   if(TOOL==="measure"){
     addDr({k:"m",a:a,b:pt});
     var d=pt.p-a.p,pct=d/a.p*100,bars=Math.round(Math.abs(pt.t-a.t)/(TFS[bTf]||3600));
@@ -938,6 +962,19 @@ function renderDr(){
     if(d.k==="txt") drH.push(bC.createPriceLine({price:d.p,color:"#e7ebf3",lineWidth:1,lineStyle:1,axisLabelVisible:false,title:d.t}));
     if(d.k==="t") segSeries(d.a,d.b,"#f2b84b",0);
     if(d.k==="m") segSeries(d.a,d.b,"#8592a8",2);
+    if(d.k==="ray"||d.k==="ext"){
+      var p0=d.a.t<=d.b.t?d.a:d.b,p1=d.a.t<=d.b.t?d.b:d.a;
+      if(p1.t!==p0.t){
+        var tEnd=bAll[bCur].t,tStart=d.k==="ext"?bAll[0].t:p0.t;
+        if(tEnd>tStart) segSeries({t:tStart,p:proj(p0,p1,tStart)},{t:tEnd,p:proj(p0,p1,tEnd)},"#f2b84b",0);
+      }
+    }
+    if(d.k==="fx"){
+      var base=d.a.p,span=d.b.p-d.a.p;
+      [0,1,1.272,1.618,2.618].forEach(function(L){
+        drH.push(bC.createPriceLine({price:base+span*L,color:"#c98a1b",lineWidth:1,lineStyle:2,axisLabelVisible:true,title:"Ext "+L}));
+      });
+    }
     if(d.k==="f"){
       var hi=Math.max(d.a.p,d.b.p),lo=Math.min(d.a.p,d.b.p);
       [0,0.236,0.382,0.5,0.618,0.786,1].forEach(function(r){
@@ -946,6 +983,7 @@ function renderDr(){
     }
   });
 }
+function proj(p0,p1,t){ return p0.p+(p1.p-p0.p)*(t-p0.t)/(p1.t-p0.t) }
 function drKey(){return bSession?"tdDr:"+bSession.id:null}
 function saveDr(){var k=drKey();if(k)localStorage.setItem(k,JSON.stringify(dr))}
 function loadDr(id){
@@ -1618,6 +1656,150 @@ $("btSessions").addEventListener("click",function(e){
   renderSessions();
 });
 
+/* Barra degli strumenti: gruppi come nelle schermate di riferimento */
+var TOOL_ICONS={
+ cross:'<path d="M12 3v18M3 12h18"/>', dot:'<circle cx="12" cy="12" r="2.6"/>', arrow:'<path d="M6 4l10 9-4 1 3 5-2 1-3-5-3 3z"/>',
+ eraser:'<path d="M5 17l8-8 6 6-4 4H9z"/><path d="M9 21h11"/>',
+ trend:'<path d="M4 18L20 6"/><circle cx="4" cy="18" r="1.6"/><circle cx="20" cy="6" r="1.6"/>',
+ ray:'<path d="M4 16L20 8"/><circle cx="4" cy="16" r="1.6"/>', info:'<path d="M7 17L17 7"/><path d="M4 20l3-1"/>',
+ ext:'<path d="M2 15L22 9"/>', angle:'<path d="M5 19V6M5 19L19 13"/>', hline:'<path d="M3 12h18"/>',
+ hray:'<path d="M8 12h13"/><circle cx="8" cy="12" r="1.6"/>', vline:'<path d="M12 3v18"/>', xline:'<path d="M3 12h18M12 3v18"/>',
+ channel:'<path d="M3 16L21 8M3 11L21 3"/>', regress:'<path d="M3 17L21 7M3 13L21 3" stroke-dasharray="2 2"/>',
+ flatch:'<path d="M3 8h18M3 16h18M7 8v8"/>', disjoint:'<path d="M3 15L10 9M14 18L21 12"/>', pitch:'<path d="M4 20L16 6M4 20L20 6M12 4l8 16"/>',
+ fib:'<path d="M3 5h18M3 9h13M3 13h9M3 17h18M3 21h11"/>', fibext:'<path d="M3 16L10 10L16 14L21 6"/>',
+ fibtime:'<path d="M5 4v16M10 4v16M15 4v16M20 4v16"/>', fan:'<path d="M4 20L20 4M4 20L20 10M4 20L20 16"/>',
+ circles:'<circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="8"/>', spiral:'<path d="M12 12c0-2 3-2 3 0s-3 4-5 2-2-6 2-7 8 2 8 7"/>',
+ arcs:'<path d="M3 17a12 12 0 0 1 18 0M6 20a8 8 0 0 1 12 0"/>', wedge:'<path d="M4 20L20 6M4 20h16"/>',
+ gann:'<rect x="4" y="4" width="16" height="16"/><path d="M4 12h16M12 4v16"/>',
+ xabcd:'<path d="M4 16L9 6L14 14L19 5"/><circle cx="4" cy="16" r="1.4"/>', cypher:'<path d="M4 18L10 8L14 14L20 6"/>',
+ hs:'<path d="M3 18L7 10L11 14L15 6L19 14"/>', abcd:'<path d="M4 18L8 8L14 14L20 6"/>', triangle:'<path d="M4 18L12 6L20 18Z"/>',
+ drives:'<path d="M4 20L8 10M10 20L14 10M16 20L20 10"/>', elliott:'<path d="M4 18L8 8L12 14L16 4L20 12"/>',
+ cycles:'<path d="M6 4v16M12 4v16M18 4v16"/>', sine:'<path d="M3 12c3-6 6-6 9 0s6 6 9 0"/>',
+ brush:'<path d="M4 20c4 0 6-2 7-6l7-7-2-2-7 7c-4 1-6 3-5 8z"/>', text:'<path d="M5 5h14M12 5v14"/>',
+ emoji:'<circle cx="12" cy="12" r="8"/><path d="M9 10h.01M15 10h.01M9 15c2 2 4 2 6 0"/>',
+ measure:'<path d="M4 18L18 4M7 15l2 2M10 12l2 2M13 9l2 2"/>', zoom:'<circle cx="11" cy="11" r="6"/><path d="M16 16l4 4M11 8v6M8 11h6"/>',
+ magnet:'<path d="M6 4v8a6 6 0 0 0 12 0V4h-4v8a2 2 0 0 1-4 0V4z"/>', lock:'<rect x="6" y="11" width="12" height="9" rx="2"/><path d="M9 11V8a3 3 0 0 1 6 0v3"/>',
+ eye:'<path d="M2 12s4-6 10-6 10 6 10 6-4 6-10 6S2 12 2 12z"/><circle cx="12" cy="12" r="2.5"/>',
+ trash:'<path d="M5 7h14M9 7V4h6v3M7 7l1 13h8l1-13"/>'
+};
+function toolIco(n){return '<svg class="ico" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(TOOL_ICONS[n]||'')+'</svg>'}
+var TB_GROUPS=[
+ {g:"cursor",label:"Cursore",icon:"cross",items:[
+   {id:"cursor",name:"Croce",icon:"cross",ok:true},{id:"cursor",name:"Punto",icon:"dot",ok:true},
+   {id:"cursor",name:"Freccia",icon:"arrow",ok:true},{id:"erase",name:"Cancellino",icon:"eraser",ok:true}]},
+ {g:"lines",label:"Linee",icon:"trend",items:[
+   {sec:"LINEE"},
+   {id:"trend",name:"Trendline",icon:"trend",ok:true,sc:"Alt+T"},{id:"ray",name:"Raggio",icon:"ray",ok:true},
+   {id:"info",name:"Infolinea",icon:"info",ok:true},{id:"ext",name:"Linea estesa",icon:"ext",ok:true},
+   {id:"angle",name:"Angolo trend",icon:"angle",ok:false},{id:"hline",name:"Linea orizzontale",icon:"hline",ok:true,sc:"Alt+H"},
+   {id:"hray",name:"Raggio orizzontale",icon:"hray",ok:true,sc:"Alt+J"},{id:"vline",name:"Linea verticale",icon:"vline",ok:false,sc:"Alt+V"},
+   {id:"xline",name:"Linea trasversale",icon:"xline",ok:false,sc:"Alt+C"},
+   {sec:"CANALI"},
+   {id:"channel",name:"Canale parallelo",icon:"channel",ok:false},{id:"regress",name:"Regressione trend",icon:"regress",ok:false},
+   {id:"flatch",name:"Massimo/minimo piatto",icon:"flatch",ok:false},{id:"disjoint",name:"Canale disgiunto",icon:"disjoint",ok:false},
+   {sec:"PITCHFORK"},
+   {id:"pf1",name:"Pitchfork",icon:"pitch",ok:false},{id:"pf2",name:"Pitchfork Schiff",icon:"pitch",ok:false},
+   {id:"pf3",name:"Pitchfork Schiff modificata",icon:"pitch",ok:false},{id:"pf4",name:"Pitchfork inside",icon:"pitch",ok:false}]},
+ {g:"fib",label:"Fibonacci",icon:"fib",items:[
+   {sec:"FIBONACCI"},
+   {id:"fibret",name:"Ritracciamento Fib",icon:"fib",ok:true,sc:"Alt+F"},{id:"fibext",name:"Estensione fibonacci",icon:"fibext",ok:true},
+   {id:"fibch",name:"Canale Fib",icon:"channel",ok:false},{id:"fibtime",name:"Ciclo temporale Fibonacci",icon:"fibtime",ok:false},
+   {id:"fanl",name:"Linee a ventaglio di Fibonacci",icon:"fan",ok:false},{id:"fibtt",name:"Ciclo temporale su trend fibonacci",icon:"fibtime",ok:false},
+   {id:"fibc",name:"Cerchi Fib",icon:"circles",ok:false},{id:"fibsp",name:"Spirale Fib",icon:"spiral",ok:false},
+   {id:"fibar",name:"Archi Fib",icon:"arcs",ok:false},{id:"fibw",name:"Cuneo Fib",icon:"wedge",ok:false},
+   {id:"fibpf",name:"Pitchfan",icon:"pitch",ok:false},
+   {sec:"GANN"},
+   {id:"gb",name:"Scatola Gann",icon:"gann",ok:false},{id:"gf",name:"Quadrato di Gann fisso",icon:"gann",ok:false},
+   {id:"gs",name:"Quadrato Gann",icon:"gann",ok:false},{id:"gfan",name:"Ventaglio Gann",icon:"fan",ok:false}]},
+ {g:"pattern",label:"Pattern",icon:"xabcd",items:[
+   {sec:"PATTERN GRAFICI"},
+   {id:"xabcd",name:"Pattern XABCD",icon:"xabcd",ok:false},{id:"cypher",name:"Cypher pattern",icon:"cypher",ok:false},
+   {id:"hs",name:"Testa e spalle",icon:"hs",ok:false},{id:"abcd",name:"Pattern ABCD",icon:"abcd",ok:false},
+   {id:"tri",name:"Pattern triangolo",icon:"triangle",ok:false},{id:"drv",name:"Pattern three drives",icon:"drives",ok:false},
+   {sec:"ONDE DI ELLIOTT"},
+   {id:"ell1",name:"Onda impulsiva di Elliott (1·2·3·4·5)",icon:"elliott",ok:false},
+   {id:"ell2",name:"Correzione onde di Elliott (A·B·C)",icon:"elliott",ok:false},
+   {id:"ell3",name:"Onda triangolare di Elliott (A·B·C·D·E)",icon:"elliott",ok:false},
+   {id:"ell4",name:"Onda combinata doppia di Elliott (W·X·Y)",icon:"elliott",ok:false},
+   {id:"ell5",name:"Onda tripla combinata di Elliott (W·X·Y·X·Z)",icon:"elliott",ok:false},
+   {sec:"CICLI"},
+   {id:"cyc1",name:"Linee cicliche",icon:"cycles",ok:false},{id:"cyc2",name:"Cicli temporali",icon:"fibtime",ok:false},
+   {id:"cyc3",name:"Curva sinusoidale",icon:"sine",ok:false}]},
+ {g:"brush",label:"Pennello",icon:"brush",items:[
+   {id:"brush",name:"Pennello",icon:"brush",ok:false},{id:"hl",name:"Evidenziatore",icon:"brush",ok:false}]},
+ {g:"text",label:"Testo",icon:"text",items:[
+   {id:"text",name:"Testo",icon:"text",ok:true},{id:"note",name:"Nota",icon:"text",ok:false}]},
+ {g:"emoji",label:"Emoji",icon:"emoji",items:[{id:"emoji",name:"Emoji",icon:"emoji",ok:false}]},
+ {g:"measure",label:"Misura",icon:"measure",items:[{id:"measure",name:"Misura",icon:"measure",ok:true,sc:"Alt+M"}]},
+ {g:"zoom",label:"Zoom",icon:"zoom",items:[
+   {id:"zoomin",name:"Zoom avanti",icon:"zoom",ok:true},{id:"zoomout",name:"Zoom indietro",icon:"zoom",ok:true}]}
+];
+var toolGroupIcon={};
+function itemById(id){
+  for(var i=0;i<TB_GROUPS.length;i++){
+    var f=TB_GROUPS[i].items.filter(function(x){return x.id===id})[0];
+    if(f) return {g:TB_GROUPS[i],item:f};
+  }
+  return null;
+}
+function buildToolbar(){
+  var nav=$("btToolbar");
+  var html=TB_GROUPS.map(function(g){
+    toolGroupIcon[g.g]=g.icon;
+    return '<button type="button" class="tv-grp" data-g="'+g.g+'" title="'+esc(g.label)+'" aria-label="'+esc(g.label)+'">'+toolIco(g.icon)+'</button>';
+  }).join("");
+  html+='<span class="tv-sep"></span>'+
+    '<button type="button" id="btMagnet" class="tv-grp" title="Magnete: aggancia ai prezzi OHLC" aria-label="Magnete">'+toolIco("magnet")+'</button>'+
+    '<button type="button" id="btLock" class="tv-grp" title="Blocca i disegni" aria-label="Blocca disegni">'+toolIco("lock")+'</button>'+
+    '<button type="button" id="btVis" class="tv-grp" title="Mostra o nascondi i disegni" aria-label="Visibilità disegni">'+toolIco("eye")+'</button>'+
+    '<button type="button" id="btClearDraw" class="tv-grp" title="Elimina tutti i disegni" aria-label="Elimina disegni">'+toolIco("trash")+'</button>';
+  nav.innerHTML=html;
+  var fly=document.createElement("div");
+  fly.id="toolFly";fly.className="tv-fly hidden";
+  document.body.appendChild(fly);
+  nav.addEventListener("click",function(e){
+    var btn=e.target.closest("[data-g]");
+    if(!btn) return;
+    var g=TB_GROUPS.filter(function(x){return x.g===btn.getAttribute("data-g")})[0];
+    if(!g) return;
+    if(g.items.length===1){ chooseItem(g.items[0]); return }
+    openFly(g,btn);
+  });
+  fly.addEventListener("click",function(e){
+    var it=e.target.closest("[data-item]");
+    if(!it) return;
+    var found=itemById(it.getAttribute("data-item"));
+    if(!found) return;
+    var idx=it.getAttribute("data-idx");
+    chooseItem(found.g.items[+idx]);
+    fly.classList.add("hidden");
+  });
+  document.addEventListener("click",function(e){
+    if(!e.target.closest("#toolFly")&&!e.target.closest("#btToolbar")) fly.classList.add("hidden");
+  });
+}
+function openFly(g,btn){
+  var fly=$("toolFly"),r=btn.getBoundingClientRect();
+  fly.innerHTML=g.items.map(function(it,i){
+    if(it.sec) return '<div class="sec">'+esc(it.sec)+'</div>';
+    var on=(it.id===TOOL)?' on':'';
+    return '<button type="button" class="'+(it.ok?'':'dis')+on+'" data-item="'+esc(it.id)+'" data-idx="'+i+'"'+(it.ok?'':' title="Non ancora disponibile in questa versione"')+'>'+
+      toolIco(it.icon)+'<span>'+esc(it.name)+'</span>'+(it.sc?'<span class="sc">'+esc(it.sc)+'</span>':'')+(it.ok?'':'<span class="sc">presto</span>')+'</button>';
+  }).join("");
+  fly.style.left=(r.right+6)+"px";
+  fly.style.top=Math.max(8,Math.min(r.top,window.innerHeight-300))+"px";
+  fly.classList.remove("hidden");
+}
+function chooseItem(it){
+  if(!it) return;
+  if(!it.ok){ $("btMeasure").textContent=it.name+": non ancora disponibile in questa versione."; return }
+  var grp=TB_GROUPS.filter(function(g){return g.items.indexOf(it)>-1})[0];
+  if(grp) toolGroupIcon[grp.g]=it.icon;
+  setTool(it.id);
+}
+
+buildToolbar();
+
 /* Pagina a tutto schermo: controlli */
 document.querySelectorAll("[data-tf]").forEach(function(b){
   b.addEventListener("click",function(){
@@ -1704,7 +1886,7 @@ document.addEventListener("keydown",function(e){
   var k=e.key.toLowerCase();
   if(k==="h") setTool("hline");
   else if(k==="t") setTool("trend");
-  else if(k==="f") setTool("fib");
+  else if(k==="f") setTool("fibret");
   else if(k==="m") setTool("measure");
   else if(k==="escape") setTool("cursor");
   else if(!bLoaded) return;
