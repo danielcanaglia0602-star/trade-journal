@@ -240,6 +240,7 @@ table th{font-weight:600}
       <div class="msg" id="authMsg" role="alert"></div>
       <button class="btn" type="submit" id="authBtn">Accedi</button>
       <button class="ghost" type="button" id="toggleAuth">Non hai un account? Registrati</button>
+      <button class="ghost" type="button" id="forgotBtn">Password dimenticata?</button>
     </form>
   </div>
 </div>
@@ -497,6 +498,7 @@ table th{font-weight:600}
         <h2>Dati</h2>
         <p style="color:var(--mute);margin-bottom:12px">Scarica tutte le operazioni reali in un file CSV, apribile con Excel.</p>
         <button class="ghost" type="button" id="exportBtn">Esporta CSV</button>
+        <button class="ghost" type="button" id="exportJsonBtn">Esporta tutti i dati (JSON)</button>
       </section>
       <section class="panel">
         <h2>Sessione</h2>
@@ -519,6 +521,7 @@ var sb=ready?supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY):null;
 /* Stato generale */
 var trades=[],btTrades=[],backtests=[],user=null,view="dashboard",calMonth=new Date(),calSel=null,authMode="login",btErr=false;
 var profile=null,rankData=null;
+var recoveryPending=false;
 var lb={period:"week",metric:"rating",rows:[],state:"idle",error:""};
 var BIN="https://api.binance.com/api/v3/klines";
 var TDTF={"1m":"1min","5m":"5min","15m":"15min","1h":"1h","4h":"4h","1d":"1day"};
@@ -1288,7 +1291,9 @@ async function loadAll(){
 function enterApp(u){
   user=u;$("auth").classList.add("hidden");$("shell").classList.remove("hidden");
   $("date").value=today();
-  setView(view);loadAll();
+  if(recoveryPending){ recoveryPending=false; setView("impostazioni"); $("pwMsg").classList.remove("ok"); $("pwMsg").textContent="Imposta qui la nuova password."; }
+  else setView(view);
+  loadAll();
 }
 function enterAuth(){
   user=null;trades=[];btTrades=[];backtests=[];
@@ -1471,6 +1476,35 @@ document.querySelectorAll("#lbMetric [data-lbm]").forEach(function(b){
 });
 $("lbSearch").addEventListener("input",renderLeaderboard);
 
+/* Sicurezza */
+$("profPublic").addEventListener("change",function(){
+  if(this.checked&&!(profile&&profile.is_public)){
+    var ok=confirm("Rendere pubblico il profilo significa che chiunque abbia il link potrà vedere le statistiche che hai scelto di mostrare. Confermi?");
+    if(!ok) this.checked=false;
+  }
+});
+$("forgotBtn").addEventListener("click",async function(){
+  var em=$("email").value.trim();
+  $("authMsg").classList.remove("ok");
+  if(!em){ $("authMsg").textContent="Scrivi prima la tua email."; return }
+  await sb.auth.resetPasswordForEmail(em,{redirectTo:location.origin+"/app"});
+  $("authMsg").classList.add("ok");
+  $("authMsg").textContent="Se l'email è registrata, riceverai un link per cambiare la password.";
+});
+$("exportJsonBtn").addEventListener("click",function(){
+  var data={
+    esportato_il:new Date().toISOString(),
+    account:user?user.email:null,
+    profilo:profile?{username:profile.username,capitale:profile.starting_capital,profilo_pubblico:profile.is_public,in_classifica:profile.in_leaderboard,privacy:profile.privacy}:null,
+    operazioni_reali:trades,
+    sessioni_backtest:backtests,
+    operazioni_backtest:btTrades
+  };
+  var blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+  var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="tradediario-dati.json";
+  document.body.appendChild(a);a.click();a.remove();
+});
+
 /* Impostazioni */
 $("profForm").addEventListener("submit",saveProfile);
 $("pwForm").addEventListener("submit",async function(e){
@@ -1490,6 +1524,8 @@ $("exportBtn").addEventListener("click",function(){
   var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="tradediario.csv";
   document.body.appendChild(a);a.click();a.remove();
 });
+
+if(sb){ sb.auth.onAuthStateChange(function(ev){ if(ev==="PASSWORD_RECOVERY") recoveryPending=true; }); }
 
 /* Avvio */
 if(!ready){
