@@ -1365,11 +1365,10 @@ table tbody tr:hover td{background:color-mix(in srgb,var(--accent) 8%,transparen
         <form id="profForm" autocomplete="off" style="margin-top:16px">
           <label>Nome utente<input id="profUser" maxlength="20" required placeholder="es. dan_trader"></label>
           <div class="switches">
-            <label class="switch"><div><b>Mostra nella Leaderboard</b><small>Compari in classifica con nome utente e statistiche aggregate</small></div><input type="checkbox" id="profInLb"><span class="track"></span></label>
             <label class="switch"><div><b>Profilo pubblico</b><small>Chiunque abbia il link può vedere il tuo profilo e trovarlo nella ricerca</small></div><input type="checkbox" id="profPublic"><span class="track"></span></label>
           </div>
           <div class="grp-title">Cosa mostrare nel profilo</div>
-          <div class="chipgrid"><label class="stat-chip"><input type="checkbox" id="pp_rank"><span class="dot"></span><span>Rank e rating</span></label><label class="stat-chip"><input type="checkbox" id="pp_return"><span class="dot"></span><span>Rendimento %</span></label><label class="stat-chip"><input type="checkbox" id="pp_win"><span class="dot"></span><span>Win rate</span></label><label class="stat-chip"><input type="checkbox" id="pp_pf"><span class="dot"></span><span>Profit factor</span></label><label class="stat-chip"><input type="checkbox" id="pp_dd"><span class="dot"></span><span>Drawdown massimo</span></label><label class="stat-chip"><input type="checkbox" id="pp_trades"><span class="dot"></span><span>Numero di trade</span></label><label class="stat-chip"><input type="checkbox" id="pp_streak"><span class="dot"></span><span>Giorni positivi e serie</span></label><label class="stat-chip"><input type="checkbox" id="pp_equity"><span class="dot"></span><span>Equity curve</span></label><label class="stat-chip"><input type="checkbox" id="pp_history"><span class="dot"></span><span>Storico mensile</span></label><label class="stat-chip"><input type="checkbox" id="pp_markets"><span class="dot"></span><span>Mercati negoziati</span></label><label class="stat-chip"><input type="checkbox" id="pp_position"><span class="dot"></span><span>Posizione in classifica</span></label><label class="stat-chip"><input type="checkbox" id="pp_net"><span class="dot"></span><span>Importo netto in valuta</span></label><label class="stat-chip"><input type="checkbox" id="pp_detail"><span class="dot"></span><span>Dettaglio dei trade</span></label></div>
+          <div class="chipgrid"><label class="stat-chip"><input type="checkbox" id="pp_rank"><span class="dot"></span><span>Rank e rating</span></label><label class="stat-chip"><input type="checkbox" id="pp_return"><span class="dot"></span><span>Rendimento %</span></label><label class="stat-chip"><input type="checkbox" id="pp_win"><span class="dot"></span><span>Win rate</span></label><label class="stat-chip"><input type="checkbox" id="pp_pf"><span class="dot"></span><span>Profit factor</span></label><label class="stat-chip"><input type="checkbox" id="pp_dd"><span class="dot"></span><span>Drawdown massimo</span></label><label class="stat-chip"><input type="checkbox" id="pp_trades"><span class="dot"></span><span>Numero di trade</span></label><label class="stat-chip"><input type="checkbox" id="pp_streak"><span class="dot"></span><span>Giorni positivi e serie</span></label><label class="stat-chip"><input type="checkbox" id="pp_equity"><span class="dot"></span><span>Equity curve</span></label><label class="stat-chip"><input type="checkbox" id="pp_history"><span class="dot"></span><span>Storico mensile</span></label><label class="stat-chip"><input type="checkbox" id="pp_markets"><span class="dot"></span><span>Mercati negoziati</span></label><label class="stat-chip"><input type="checkbox" id="pp_net"><span class="dot"></span><span>Importo netto in valuta</span></label><label class="stat-chip"><input type="checkbox" id="pp_detail"><span class="dot"></span><span>Dettaglio dei trade</span></label></div>
           <details class="adv">
             <summary>Impostazioni avanzate</summary>
             <label>Capitale di riferimento (USD)<input type="number" id="profCap" min="1" step="100" value="10000"></label>
@@ -2297,7 +2296,7 @@ $("trovaInput").addEventListener("input",function(){
 renderTrovaHint("Scrivi il nome utente di un trader per trovarlo.");
 
 /* Profilo pubblico */
-var PRIV_KEYS=["rank","return","win","pf","dd","trades","streak","equity","history","markets","position","net","detail"];
+var PRIV_KEYS=["rank","return","win","pf","dd","trades","streak","equity","history","markets","net","detail"];
 function getPrivacy(){
   var o={};
   PRIV_KEYS.forEach(function(k){ var el=$("pp_"+k); o[k]=el?el.checked:false; });
@@ -2357,7 +2356,7 @@ async function saveProfile(e){
   if(!/^[a-z0-9_]{3,20}$/.test(u)){$("profMsg").textContent="Il nome utente deve avere 3-20 caratteri: lettere minuscole, numeri o _.";return}
   if(!(cap>0)){$("profMsg").textContent="Inserisci un capitale iniziale valido.";return}
   $("profBtn").disabled=true;
-  var r=await sb.from("profiles").upsert({user_id:user.id,username:u,starting_capital:cap,in_leaderboard:$("profInLb").checked,is_public:$("profPublic").checked,privacy:getPrivacy()},{onConflict:"user_id"}).select().single();
+  var r=await sb.from("profiles").upsert({user_id:user.id,username:u,starting_capital:cap,is_public:$("profPublic").checked,privacy:getPrivacy()},{onConflict:"user_id"}).select().single();
   $("profBtn").disabled=false;
   if(r.error){$("profMsg").textContent=r.error.code==="23505"?"Nome utente già usato, scegline un altro.":"Salvataggio non riuscito: "+r.error.message;return}
   profile=r.data;
@@ -2422,7 +2421,6 @@ function renderImpostazioni(){ fillPrefs();
   $("acctEmail").textContent=user?user.email:"";
   $("profUser").value=profile?profile.username||"":"";
   $("profCap").value=profile?profile.starting_capital:10000;
-  $("profInLb").checked=profile?!!profile.in_leaderboard:false;
   $("profPublic").checked=profile?!!profile.is_public:false;
   var pvv=(profile&&profile.privacy)||{};
   PRIV_KEYS.forEach(function(k){ var el=$("pp_"+k); if(el) el.checked=(pvv[k]!==undefined)?!!pvv[k]:(k!=="net"&&k!=="detail"); });
