@@ -918,6 +918,13 @@ table tbody tr:hover td{background:color-mix(in srgb,var(--accent) 8%,transparen
 @keyframes logoFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
 @keyframes shine{0%{left:-60%}55%,100%{left:140%}}
 .logo-img,.logo-hero{background:none!important;box-shadow:none!important;border-radius:0!important}
+
+/* Long verde, Short rosso nel modulo Nuova operazione */
+.seg input#long:checked+label{background:linear-gradient(135deg,#34d399,#16a34a)!important;color:#fff!important;box-shadow:0 8px 20px -10px #22c55e}
+.seg input#short:checked+label{background:linear-gradient(135deg,#fb7185,#dc2626)!important;color:#fff!important;box-shadow:0 8px 20px -10px #ef4444}
+.seg input#long:focus-visible+label{outline:2px solid #22c55e;outline-offset:-3px}
+.seg input#short:focus-visible+label{outline:2px solid #ef4444;outline-offset:-3px}
+.seg label{transition:background .3s ease,color .3s ease,box-shadow .3s ease}
 </style>
 </head>
 <body>
