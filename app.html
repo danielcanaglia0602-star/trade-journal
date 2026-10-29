@@ -1677,7 +1677,6 @@ function renderDashboard(){
     '<div class="hero">'+
       '<section class="panel"><span class="lab">Streak attuale</span><div class="big">'+streak+' giorni</div><p class="sub" style="margin:6px 0 0">Record: '+record+' giorni di fila con almeno un trade</p></section>'+
       rankCardHTML()+
-      '<section class="panel"><span class="lab">Sessioni di backtest</span><div class="big">'+backtests.length+'</div><p class="sub" style="margin:6px 0 0">'+btTrades.length+' operazioni simulate in totale</p></section>'+
     '</div>'+
     '<div class="grid2">'+
       '<section class="panel"><h2>Risultato per giorno · '+esc(now.toLocaleDateString("it-IT",{month:"long",year:"numeric"}))+'</h2>'+bars(dm,y,m)+'</section>'+
