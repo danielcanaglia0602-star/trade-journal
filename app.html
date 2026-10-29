@@ -950,6 +950,34 @@ table tbody tr:hover td{background:color-mix(in srgb,var(--accent) 8%,transparen
 .theme-pill:hover{transform:translateY(-1px)}
 .theme-pill:active .tp-knob{transform:scale(.92)}
 .brand .logo-img,.logo-hero{background:none!important;padding:0!important;border-radius:0!important;box-shadow:none!important}
+
+/* Card rank */
+.rk-card{--rk:#b87333;position:relative;overflow:hidden}
+.rk-glow{position:absolute;top:-70px;right:-60px;width:240px;height:240px;border-radius:50%;background:radial-gradient(circle,var(--rk),transparent 65%);opacity:.25;filter:blur(8px);pointer-events:none;animation:rkPulse 4.5s ease-in-out infinite}
+@keyframes rkPulse{0%,100%{transform:scale(1);opacity:.2}50%{transform:scale(1.12);opacity:.34}}
+.rk-head{display:flex;align-items:center;gap:18px;position:relative;z-index:1}
+.rk-emb{width:86px;height:98px;flex:none;filter:drop-shadow(0 0 14px var(--rk));animation:rkPop .8s cubic-bezier(.2,.7,.2,1) both}
+@keyframes rkPop{from{transform:scale(.6) rotate(-8deg);opacity:0}to{transform:none;opacity:1}}
+.rk-name{font:700 32px/1.1 var(--font-title);color:var(--rk);text-shadow:0 0 22px color-mix(in srgb,var(--rk) 45%,transparent);margin-top:4px}
+.rk-track{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin:22px 0 14px;position:relative;z-index:1}
+.rk-step{display:grid;gap:6px;justify-items:center;min-width:0}
+.rk-step i{display:block;width:100%;height:8px;border-radius:99px;background:var(--line)}
+.rk-step.on i{background:var(--c)}
+.rk-step.cur i{box-shadow:0 0 14px var(--c);animation:rkBlink 2s ease-in-out infinite}
+@keyframes rkBlink{0%,100%{opacity:1}50%{opacity:.6}}
+.rk-step small{font-size:10px;color:var(--mute);letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.rk-step.cur small{color:var(--ink);font-weight:700}
+.rk-bar{height:12px;border-radius:99px;background:var(--line);overflow:hidden;position:relative;z-index:1}
+.rk-bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--rk),color-mix(in srgb,var(--rk) 40%,#fff));transform-origin:left;animation:rkGrow 1.2s cubic-bezier(.2,.7,.2,1) both;position:relative;overflow:hidden}
+.rk-bar i::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.55) 50%,transparent 70%);transform:translateX(-100%);animation:rkShine 2.6s ease-in-out infinite}
+@keyframes rkGrow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes rkShine{0%{transform:translateX(-100%)}60%,100%{transform:translateX(100%)}}
+.rk-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;position:relative;z-index:1}
+.rk-chip{font-size:12px;padding:6px 11px;border-radius:999px;border:1px solid var(--line);background:color-mix(in srgb,var(--panel) 80%,transparent);transition:transform .25s ease}
+.rk-chip:hover{transform:translateY(-2px)}
+.rk-chip.neg{color:var(--loss);border-color:color-mix(in srgb,var(--loss) 45%,transparent)}
+@media (max-width:600px){.rk-emb{width:70px;height:80px}.rk-name{font-size:26px}.rk-step small{font-size:9px}}
+@media (prefers-reduced-motion:reduce){.rk-emb,.rk-glow,.rk-step.cur i,.rk-bar i,.rk-bar i::after{animation:none!important}}
 </style>
 </head>
 <body>
@@ -2354,21 +2382,42 @@ function rankEmblem(color,name){
     '<text x="24" y="34" text-anchor="middle" font-size="18" font-weight="700" fill="#1a1d21">'+esc(letter)+'</text></svg>';
 }
 var rankErr="";
+var RK_TIERS=[["Bronze","#b87333"],["Silver","#c0c7d1"],["Gold","#e0b84a"],["Platinum","#8fd3e6"],["Diamond","#6aa8ff"],["Elite","#b57bff"],["Legend","#ff7a59"]];
+var RK_ICON={giornate_positive:"🗓️",serie_positiva:"🔥",rendimento:"📈",costanza_settimanale:"🧱",penalita_drawdown:"⚠️"};
+var RK_LABEL={giornate_positive:"Giornate",serie_positiva:"Serie",rendimento:"Rendimento",costanza_settimanale:"Costanza",penalita_drawdown:"Drawdown"};
+function rkEmblemBig(c,name){
+  var id="rkg"+Math.random().toString(36).slice(2,8);
+  return '<svg class="rk-emb" viewBox="0 0 48 56" aria-hidden="true"><defs><linearGradient id="'+id+'" x1="0" y1="0" x2="0" y2="1">'+
+    '<stop offset="0" stop-color="#fff" stop-opacity=".92"/><stop offset=".45" stop-color="'+esc(c)+'"/><stop offset="1" stop-color="#1f2937"/></linearGradient></defs>'+
+    '<path d="M24 2 L44 10 V28 C44 40 36 49 24 54 C12 49 4 40 4 28 V10 Z" fill="url(#'+id+')" stroke="'+esc(c)+'" stroke-width="1.2"/>'+
+    '<path d="M24 9 L38 14 V28 C38 37 32 44 24 48 C16 44 10 37 10 28 V14 Z" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="1"/>'+
+    '<text x="24" y="34" text-anchor="middle" font-size="18" font-weight="800" fill="#0b0d10">'+esc((name||"?").charAt(0))+'</text></svg>';
+}
 function rankCardHTML(){
-  if(!rankData&&rankErr) return '<section class="panel rank-card"><span class="lab">Rank</span><div class="big">—</div><p class="rank-meta" style="color:var(--loss)">Rank non disponibile: '+esc(rankErr)+'</p><p class="rank-meta"><button class="ghost" type="button" onclick="refreshRank()">Riprova</button></p></section>';
-  if(!rankData) return '<section class="panel rank-card"><span class="lab">Rank</span><div class="big">—</div><p class="rank-meta">Caricamento del rank…</p></section>';
-  var r=rankData,base=r.rank_min,span=(r.next_points||base)-base;
+  if(!rankData&&rankErr) return '<section class="panel rk-card" style="--rk:#ef4444"><span class="lab">Rank</span><div class="rk-name" style="color:var(--ink)">—</div><p class="rank-meta" style="color:var(--loss)">Rank non disponibile: '+esc(rankErr)+'</p><p class="rank-meta"><button class="ghost" type="button" onclick="refreshRank()">Riprova</button></p></section>';
+  if(!rankData) return '<section class="panel rk-card" style="--rk:#6b7280"><span class="lab">Rank</span><div class="rk-name" style="color:var(--ink)">—</div><p class="rank-meta">Caricamento del rank…</p></section>';
+  var r=rankData,col=r.color||"#b87333",base=r.rank_min||0,span=(r.next_points||base)-base;
   var prog=r.next_rank&&span>0?Math.min(100,Math.max(0,(r.points-base)/span*100)):100;
+  var idx=RK_TIERS.findIndex(function(t){return t[0]===r.rank});
+  var steps=RK_TIERS.map(function(t,i){
+    return '<div class="rk-step'+(i<=idx?' on':'')+(i===idx?' cur':'')+'" style="--c:'+t[1]+'" title="'+t[0]+'"><i></i><small>'+t[0]+'</small></div>';
+  }).join("");
   var next=r.next_rank
-    ?'Prossimo rank: '+esc(r.next_rank)+' a '+r.next_points+' punti'+(r.next_min_days?' e '+r.next_min_days+' giorni validi':'')+'. Mancano '+(r.next_points-r.points)+' punti.'
-    :'Hai raggiunto il rank più alto.';
+    ?'Prossimo rank: <b>'+esc(r.next_rank)+'</b> a '+r.next_points+' punti'+(r.next_min_days?' e '+r.next_min_days+' giorni validi':'')+'. Mancano '+(r.next_points-r.points)+' punti.'
+    :'Hai raggiunto il rank più alto. 🏆';
   var b=r.breakdown||{};
-  var brk='Giornate positive +'+(b.giornate_positive||0)+' · Serie +'+(b.serie_positiva||0)+' · Rendimento +'+(b.rendimento||0)+' · Costanza +'+(b.costanza_settimanale||0)+(b.penalita_drawdown?' · Drawdown '+b.penalita_drawdown:'');
-  return '<section class="panel rank-card"><div class="rank-head">'+rankEmblem(r.color,r.rank)+
-    '<div><span class="lab">Rank</span><div class="big" style="color:'+esc(r.color)+'">'+esc(r.rank)+'</div></div></div>'+
-    '<p class="rank-meta">Trading Rating: <b style="color:var(--ink)">'+r.points+' punti</b> · '+r.valid_days+' giorni validi</p>'+
-    '<div class="xpbar"><i style="width:'+prog.toFixed(0)+'%;background:'+esc(r.color)+'"></i></div>'+
-    '<p class="rank-meta">'+next+'</p><p class="rank-meta" style="font-size:12px">'+brk+'</p></section>';
+  var chips=Object.keys(RK_ICON).filter(function(k){return b[k]!==undefined&&b[k]!==null}).map(function(k){
+    var v=b[k],neg=v<0;
+    return '<span class="rk-chip'+(neg?' neg':'')+'">'+RK_ICON[k]+' '+RK_LABEL[k]+' '+(v>0?'+':'')+v+'</span>';
+  }).join("");
+  return '<section class="panel rk-card" style="--rk:'+esc(col)+'"><div class="rk-glow" aria-hidden="true"></div>'+
+    '<div class="rk-head">'+rkEmblemBig(col,r.rank)+'<div><span class="lab">Rank attuale</span><div class="rk-name">'+esc(r.rank)+'</div>'+
+    '<p class="rank-meta">Trading Rating <b style="color:var(--ink)">'+r.points+'</b> punti · '+r.valid_days+' giorni validi</p></div></div>'+
+    '<div class="rk-track">'+steps+'</div>'+
+    '<div class="rk-bar"><i style="width:'+prog.toFixed(0)+'%"></i></div>'+
+    '<p class="rank-meta">'+next+'</p>'+
+    (chips?'<div class="rk-chips">'+chips+'</div>':'')+
+  '</section>';
 }
 async function loadProfile(){
   var r=await sb.from("profiles").select("*").eq("user_id",user.id).maybeSingle();
