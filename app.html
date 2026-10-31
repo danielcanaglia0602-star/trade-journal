@@ -985,6 +985,19 @@ table tbody tr:hover td{background:color-mix(in srgb,var(--accent) 8%,transparen
 @keyframes tpIn{from{opacity:0;transform:scale(.4) rotate(-120deg)}to{opacity:1;transform:none}}
 .tp-spark{position:fixed;width:6px;height:6px;border-radius:50%;pointer-events:none;z-index:999;transform:translate(-50%,-50%)}
 ::view-transition-old(root),::view-transition-new(root){animation:none;mix-blend-mode:normal}
+
+/* Cerchietto del tema: scorrimento fluido da un lato all'altro */
+.theme-pill{position:relative!important;display:block!important;padding:0!important;height:42px!important;overflow:hidden}
+.theme-pill .tp-knob{position:absolute!important;top:4px!important;left:4px!important;width:34px!important;height:34px!important;margin:0!important;
+  transition:left .8s cubic-bezier(.34,1.42,.5,1),background .6s ease,box-shadow .6s ease!important}
+.theme-pill[data-mode="dark"] .tp-knob{left:calc(100% - 38px)!important}
+.theme-pill .tp-label{position:absolute;inset:0;display:flex!important;align-items:center;justify-content:center;padding:0 40px 0 40px!important;
+  transition:color .5s ease,padding .8s cubic-bezier(.34,1.42,.5,1)}
+.theme-pill[data-mode="dark"] .tp-label{padding:0 40px 0 40px!important}
+.theme-pill.flip .tp-knob{animation:tpSquash .8s cubic-bezier(.3,.7,.3,1)!important}
+@keyframes tpSquash{0%{transform:scale(1,1)}25%{transform:scale(1.25,.8)}55%{transform:scale(.9,1.12)}80%{transform:scale(1.04,.97)}100%{transform:scale(1,1)}}
+.theme-pill .tp-knob svg{transition:transform .8s cubic-bezier(.34,1.42,.5,1)}
+.theme-pill.flip .tp-knob svg{animation:tpIn .7s .15s both!important}
 </style>
 </head>
 <body>
