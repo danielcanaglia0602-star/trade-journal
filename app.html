@@ -998,6 +998,50 @@ table tbody tr:hover td{background:color-mix(in srgb,var(--accent) 8%,transparen
 @keyframes tpSquash{0%{transform:scale(1,1)}25%{transform:scale(1.25,.8)}55%{transform:scale(.9,1.12)}80%{transform:scale(1.04,.97)}100%{transform:scale(1,1)}}
 .theme-pill .tp-knob svg{transition:transform .8s cubic-bezier(.34,1.42,.5,1)}
 .theme-pill.flip .tp-knob svg{animation:tpIn .7s .15s both!important}
+
+/* ===== Layout telefono ===== */
+.mhead,.mtabs{display:none}
+@media (max-width:760px){
+  .app{display:block!important;grid-template-columns:1fr!important}
+  .side{display:none!important}
+  #main{padding:88px 14px 128px!important;min-width:0}
+  .mhead{display:flex!important;position:fixed;top:0;left:0;right:0;height:68px;z-index:70;align-items:center;justify-content:space-between;padding:0 14px;
+    background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--line);
+    padding-top:env(safe-area-inset-top,0px)}
+  .mh-left img{height:40px;width:auto;display:block;animation:logoIn .8s cubic-bezier(.2,.7,.2,1) both}
+  .mh-right{display:flex;align-items:center;gap:10px}
+  .mhead .theme-pill{width:132px!important;height:36px!important;margin:0!important;padding:0!important}
+  .mhead .theme-pill .tp-knob{width:28px!important;height:28px!important;top:3px!important;left:3px!important}
+  .mhead .theme-pill[data-mode="dark"] .tp-knob{left:calc(100% - 31px)!important}
+  .mhead .theme-pill .tp-label{font-size:9.5px!important;padding:0 30px!important}
+  .mhead .theme-pill .tp-knob svg{width:14px!important;height:14px!important}
+  .mh-out{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--ink);display:grid;place-items:center;cursor:pointer;transition:transform .25s,background .3s}
+  .mh-out:active{transform:scale(.88)}
+  .mh-out svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+  .mtabs{display:grid!important;position:fixed;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom,0px));height:70px;z-index:80;
+    grid-template-columns:repeat(6,minmax(0,1fr));padding:6px;border-radius:26px;
+    background:color-mix(in srgb,var(--panel) 86%,transparent);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);
+    border:1px solid color-mix(in srgb,var(--line) 85%,transparent);box-shadow:0 18px 40px -16px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.05);
+    animation:mtIn .7s cubic-bezier(.2,.8,.2,1) both}
+  @keyframes mtIn{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+  .mt-ind{position:absolute;top:6px;bottom:6px;left:6px;width:calc((100% - 12px)/6);border-radius:20px;
+    background:linear-gradient(145deg,rgba(34,197,94,.28),rgba(34,197,94,.08));
+    box-shadow:inset 0 0 0 1px rgba(34,197,94,.45),0 0 22px -6px rgba(34,197,94,.6);
+    transform:translateX(calc(var(--i,0) * 100%));transition:transform .55s cubic-bezier(.34,1.45,.5,1)}
+  .mt{position:relative;z-index:1;background:none;border:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--mute);cursor:pointer;padding:0;border-radius:20px;transition:color .35s ease}
+  .mt svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;transition:transform .45s cubic-bezier(.34,1.45,.5,1)}
+  .mt span{font-size:10px;font-weight:600;letter-spacing:.01em;transition:opacity .3s}
+  .mt:active svg{transform:scale(.8)}
+  .mt.on{color:#22c55e}
+  .mt.on svg{transform:translateY(-2px) scale(1.12);filter:drop-shadow(0 0 6px rgba(34,197,94,.6))}
+  .mt:not(.on) span{opacity:.75}
+  .mt.on span{opacity:1}
+  h1{font-size:26px!important}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  table{display:block;overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch}
+}
+@media (max-width:360px){.mhead .theme-pill{width:118px!important}.mt span{font-size:9px}}
+@media (prefers-reduced-motion:reduce){.mtabs,.mt-ind,.mt svg{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
@@ -1057,6 +1101,7 @@ table tbody tr:hover td{background:color-mix(in srgb,var(--accent) 8%,transparen
     <button type="button" class="theme-pill" id="themeToggle" data-mode="dark" aria-label="Cambia tema chiaro o scuro"><span class="tp-knob" aria-hidden="true"><svg class="tp-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1l2.1-2.1M17 7l2.1-2.1"/></svg><svg class="tp-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg></span><span class="tp-label" id="tpLabel">NIGHTMODE</span></button>
   </aside>
 
+<header class="mhead" id="mhead"><div class="mh-left" id="mhLeft"></div><div class="mh-right" id="mhRight"><button type="button" class="mh-out" id="mhOut" aria-label="Esci"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg></button></div></header>
   <main id="main">
     <section id="v-dashboard" class="view"></section>
     <section id="v-oggi" class="view hidden"></section>
@@ -1496,6 +1541,8 @@ table tbody tr:hover td{background:color-mix(in srgb,var(--accent) 8%,transparen
       </section>
     </section>
   </main>
+<nav class="mtabs" id="mtabs" aria-label="Menu mobile"><span class="mt-ind" id="mtInd"></span><button type="button" class="mt" data-mtab="dashboard" aria-label="Dashboard"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="14" y="12" width="7" height="9" rx="2"/><rect x="3" y="16" width="7" height="5" rx="2"/></svg><span>Dashboard</span></button><button type="button" class="mt" data-mtab="oggi" aria-label="Giornata"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg><span>Giornata</span></button><button type="button" class="mt" data-mtab="calendario" aria-label="Calendario"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span>Calendario</span></button><button type="button" class="mt" data-mtab="operazioni" aria-label="Operazioni"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/></svg><span>Operazioni</span></button><button type="button" class="mt" data-mtab="community" aria-label="Community"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg><span>Community</span></button><button type="button" class="mt" data-mtab="impostazioni" aria-label="Profilo"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg><span>Profilo</span></button></nav>
+
 </div>
 
 <div id="profModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="pmTitle">
@@ -3870,6 +3917,43 @@ $("bwList").addEventListener("click",async function(e){
 });
 
 applyPrefs();
+
+/* ---- Navigazione telefono ---- */
+(function(){
+  var mq=window.matchMedia("(max-width:760px)");
+  var tp=$("themeToggle"),home={parent:tp.parentNode,next:tp.nextSibling};
+  function placeTheme(){
+    if(mq.matches){ $("mhRight").insertBefore(tp,$("mhOut")); }
+    else if(home.parent){ home.parent.insertBefore(tp,home.next||null); }
+  }
+  function placeLogo(){
+    var L=$("mhLeft"); if(!L||L.firstChild) return;
+    var src=document.querySelector(".brand .logo-img");
+    if(src){ var im=src.cloneNode(); im.removeAttribute("style"); L.appendChild(im); }
+  }
+  function syncTabs(v){
+    var key=(v==="impostazioni"||v==="supporto"||v==="privacy")?"impostazioni":v;
+    var idx=0;
+    document.querySelectorAll(".mt").forEach(function(b,i){
+      var on=b.getAttribute("data-mtab")===key; b.classList.toggle("on",on); if(on) idx=i;
+    });
+    var ind=$("mtInd"); if(ind) ind.style.setProperty("--i",idx);
+  }
+  var _setView=setView;
+  setView=function(v){ _setView(v); syncTabs(view); };
+  document.querySelectorAll(".mt").forEach(function(b){
+    b.addEventListener("click",function(){
+      var v=b.getAttribute("data-mtab");
+      if(v) setView(v);
+      if(navigator.vibrate) navigator.vibrate(8);
+    });
+  });
+  $("mhOut").addEventListener("click",function(){
+    var o=document.querySelector('[data-act="logout"]'); if(o) o.click();
+  });
+  if(mq.addEventListener) mq.addEventListener("change",placeTheme); else mq.addListener(placeTheme);
+  placeLogo(); placeTheme(); syncTabs(view);
+})();
 /* Avvio */
 if(!ready){
   $("auth").innerHTML='<div class="panel authbox"><h1>Configurazione mancante</h1><p class="sub">Inserisci URL e chiave Supabase in config.js.</p></div>';
