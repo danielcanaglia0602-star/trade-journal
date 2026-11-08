@@ -1116,7 +1116,8 @@ table tbody tr:hover td{background:color-mix(in srgb,var(--accent) 8%,transparen
         <h2>Nuova operazione</h2>
         <div class="row">
           <label>Data<input type="date" id="date" required></label>
-          <label>Strumento<input id="sym" placeholder="EURUSD" required maxlength="16"></label>
+          <label>Strumento<input id="sym" list="symList" placeholder="es. XAUUSD, EURUSD" required maxlength="16" autocomplete="off"></label>
+          <datalist id="symList"><option value="XAUUSD"><option value="XAGUSD"><option value="EURUSD"><option value="GBPUSD"><option value="USDJPY"><option value="EURJPY"><option value="GBPJPY"><option value="AUDUSD"><option value="USDCAD"><option value="USDCHF"><option value="NZDUSD"><option value="BTCUSD"><option value="ETHUSD"><option value="NAS100"><option value="US30"><option value="SPX500"><option value="GER40"><option value="UK100"><option value="USOIL"><option value="NATGAS"></datalist>
         </div>
         <div class="seg" role="radiogroup" aria-label="Direzione">
           <input type="radio" name="dir" id="long" value="long" checked><label for="long">Long</label>
@@ -1127,8 +1128,12 @@ table tbody tr:hover td{background:color-mix(in srgb,var(--accent) 8%,transparen
           <label>Uscita<input type="number" id="exit" step="any" required></label>
         </div>
         <div class="row">
-          <label>Quantità<input type="number" id="size" step="any" min="0.0000001" required></label>
+          <label>Quantità (lotti)<input type="number" id="size" step="any" min="0.0000001" required></label>
           <label>Commissioni<input type="number" id="fees" step="any" min="0" value="0"></label>
+        </div>
+        <div class="row">
+          <label>Moltiplicatore contratto<input type="number" id="cmult" step="any" min="0.0001" placeholder="automatico"></label>
+          <span class="muted" id="cmHint" style="font-size:12px;align-self:end;padding-bottom:8px"></span>
         </div>
         <label>Note<textarea id="note" maxlength="1000" placeholder="Setup, errori, emozioni…"></textarea></label>
         <div class="tf-photo">
@@ -2720,9 +2725,10 @@ $("tradeForm").addEventListener("submit",async function(e){
   $("tradeMsg").textContent="";
   if(!sym||isNaN(entry)||isNaN(exit)||isNaN(size)||size<=0){$("tradeMsg").textContent="Controlla strumento, prezzi e quantità.";return}
   $("saveBtn").disabled=true;
+  var cm=parseFloat($("cmult").value)||contractMult(sym);
   var row={user_id:user.id,trade_date:$("date").value,symbol:sym,
     direction:document.querySelector('input[name="dir"]:checked').value,
-    entry_price:entry,exit_price:exit,size:size,fees:fees,note:$("note").value.trim()};
+    entry_price:entry,exit_price:exit,size:size*cm,fees:fees,note:$("note").value.trim()};
   var paths=[];
   for(var fi=0;fi<tradeFiles.length;fi++){
     var tf=tradeFiles[fi],ext=tf.type==="image/png"?"png":tf.type==="image/webp"?"webp":"jpg";
@@ -3875,6 +3881,24 @@ $("cmList").addEventListener("click",async function(e){
     b.addEventListener("mouseleave",function(){ var e=b.querySelector(".em"); if(e) e.style.transform="" });
   });
 })();
+/* Contratti standard per strumento */
+function contractMult(sym){
+  var s=(sym||"").toUpperCase().replace(/[^A-Z0-9]/g,"");
+  var known={XAUUSD:100,XAGUSD:5000,BTCUSD:1,ETHUSD:1,NAS100:1,US30:1,SPX500:1,GER40:1,UK100:1,USOIL:1000,NATGAS:10000};
+  if(known[s]) return known[s];
+  if(/^[A-Z]{6}$/.test(s)) return 100000;          // coppie forex: 1 lotto = 100.000 unità
+  return 1;
+}
+function syncContractHint(){
+  var sym=$("sym").value.trim(),m=contractMult(sym);
+  if(!$("cmult").dataset.touched) $("cmult").value=m;
+  var v=parseFloat($("cmult").value)||m;
+  $("cmHint").textContent=sym?("1 lotto = "+v.toLocaleString("it-IT")+" unità"):"";
+}
+$("sym").addEventListener("input",syncContractHint);
+$("sym").addEventListener("change",syncContractHint);
+$("cmult").addEventListener("input",function(){ this.dataset.touched="1"; syncContractHint(); });
+
 /* Parole non consentite */
 var BANNED=[];
 function normWord(w){ return (w||"").toLowerCase().replace(/\s+/g," ").trim() }
