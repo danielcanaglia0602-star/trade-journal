@@ -2644,6 +2644,11 @@ function setView(v){
   renderCurrent();
 }
 async function loadAll(){
+  try{ await loadAllInner(); }
+  catch(e){ console.error(e); }
+  try{ renderCurrent(); }catch(e){ console.error(e); }
+}
+async function loadAllInner(){
   var r=await sb.from("trades").select("*").order("trade_date",{ascending:true}).order("created_at",{ascending:true});
   if(r.error){alert("Impossibile caricare le operazioni: "+r.error.message);return}
   var all=r.data||[];
@@ -2667,6 +2672,7 @@ function enterApp(u){
   $("date").value=today();
   if(recoveryPending){ recoveryPending=false; setView("impostazioni"); $("pwMsg").classList.remove("ok"); $("pwMsg").textContent="Imposta qui la nuova password."; }
   else setView(view);
+  try{ renderCurrent(); }catch(e){ console.error(e); }
   loadAll();
 }
 function enterAuth(){
