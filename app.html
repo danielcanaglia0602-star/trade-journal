@@ -1147,7 +1147,7 @@ table tbody tr:hover td{background:color-mix(in srgb,var(--accent) 8%,transparen
         <div class="row">
           <label>Data<input type="date" id="date" required></label>
           <label>Strumento<input id="sym" list="symList" placeholder="es. XAUUSD, EURUSD" required maxlength="16" autocomplete="off"></label>
-          <datalist id="symList"><option value="XAUUSD"><option value="XAGUSD"><option value="EURUSD"><option value="GBPUSD"><option value="USDJPY"><option value="EURJPY"><option value="GBPJPY"><option value="AUDUSD"><option value="USDCAD"><option value="USDCHF"><option value="NZDUSD"><option value="BTCUSD"><option value="ETHUSD"><option value="NAS100"><option value="US30"><option value="SPX500"><option value="GER40"><option value="UK100"><option value="USOIL"><option value="NATGAS"></datalist>
+          <datalist id="symList"><option value="XAUUSD"><option value="XAGUSD"><option value="XPTUSD"><option value="XPDUSD"><option value="XAUEUR"><option value="EURUSD"><option value="GBPUSD"><option value="USDJPY"><option value="USDCHF"><option value="AUDUSD"><option value="USDCAD"><option value="NZDUSD"><option value="EURGBP"><option value="EURJPY"><option value="EURCHF"><option value="EURAUD"><option value="EURCAD"><option value="EURNZD"><option value="GBPJPY"><option value="GBPCHF"><option value="GBPAUD"><option value="GBPCAD"><option value="GBPNZD"><option value="AUDJPY"><option value="AUDCAD"><option value="AUDCHF"><option value="AUDNZD"><option value="CADJPY"><option value="CADCHF"><option value="CHFJPY"><option value="NZDJPY"><option value="NZDCAD"><option value="NZDCHF"><option value="USDCNH"><option value="USDMXN"><option value="USDZAR"><option value="USDSGD"><option value="USDNOK"><option value="USDSEK"><option value="US500"><option value="NAS100"><option value="US30"><option value="USTEC"><option value="DE40"><option value="UK100"><option value="JP225"><option value="FR40"><option value="VIX"><option value="DXY"><option value="USOIL"><option value="UKOIL"><option value="NATGAS"><option value="BTCUSD"><option value="ETHUSD"><option value="SOLUSD"><option value="XRPUSD"><option value="BNBUSD"><option value="BTCUSDT"><option value="ETHUSDT"></datalist>
         </div>
         <div class="seg" role="radiogroup" aria-label="Direzione">
           <input type="radio" name="dir" id="long" value="long" checked><label for="long">Long</label>
@@ -3910,7 +3910,7 @@ $("cmList").addEventListener("click",async function(e){
 /* Contratti standard per strumento */
 function contractMult(sym){
   var s=(sym||"").toUpperCase().replace(/[^A-Z0-9]/g,"");
-  var known={XAUUSD:100,XAGUSD:5000,BTCUSD:1,ETHUSD:1,NAS100:1,US30:1,SPX500:1,GER40:1,UK100:1,USOIL:1000,NATGAS:10000};
+  var known={XAUUSD:100,XAGUSD:5000,XPTUSD:100,XPDUSD:100,XAUEUR:100,BTCUSD:1,ETHUSD:1,SOLUSD:1,XRPUSD:1,BNBUSD:1,BTCUSDT:1,ETHUSDT:1,NAS100:1,US30:1,US500:1,USTEC:1,SPX500:1,GER40:1,DE40:1,UK100:1,JP225:1,FR40:1,VIX:1,DXY:1,USOIL:1000,UKOIL:1000,NATGAS:10000};
   if(known[s]) return known[s];
   if(/^[A-Z]{6}$/.test(s)) return 100000;          // coppie forex: 1 lotto = 100.000 unità
   return 1;
