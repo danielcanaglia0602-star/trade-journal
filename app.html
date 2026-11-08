@@ -1008,10 +1008,10 @@ table tbody tr:hover td{background:color-mix(in srgb,var(--accent) 8%,transparen
 /* ===== Layout telefono ===== */
 .mhead,.mtabs{display:none}
 @media (max-width:760px){
-  .app{display:block!important;grid-template-columns:1fr!important}
+  .app:not(.hidden){display:block!important;grid-template-columns:1fr!important}
   .side{display:none!important}
   #main{padding:88px 14px 128px!important;min-width:0}
-  .mhead{display:flex!important;position:fixed;top:0;left:0;right:0;height:68px;z-index:70;align-items:center;justify-content:space-between;padding:0 14px;
+  .mhead{display:none;position:fixed;top:0;left:0;right:0;height:68px;z-index:70;align-items:center;justify-content:space-between;padding:0 14px;
     background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--line);
     padding-top:env(safe-area-inset-top,0px)}
   .mh-left img{height:40px;width:auto;display:block;animation:logoIn .8s cubic-bezier(.2,.7,.2,1) both}
@@ -1024,7 +1024,7 @@ table tbody tr:hover td{background:color-mix(in srgb,var(--accent) 8%,transparen
   .mh-out{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--ink);display:grid;place-items:center;cursor:pointer;transition:transform .25s,background .3s}
   .mh-out:active{transform:scale(.88)}
   .mh-out svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
-  .mtabs{display:grid!important;position:fixed;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom,0px));height:70px;z-index:80;
+  .mtabs{display:none!important;position:fixed;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom,0px));height:70px;z-index:80;
     grid-template-columns:repeat(6,minmax(0,1fr));padding:6px;border-radius:26px;
     background:color-mix(in srgb,var(--panel) 86%,transparent);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);
     border:1px solid color-mix(in srgb,var(--line) 85%,transparent);box-shadow:0 18px 40px -16px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.05);
@@ -1046,6 +1046,7 @@ table tbody tr:hover td{background:color-mix(in srgb,var(--accent) 8%,transparen
   .stats{grid-template-columns:repeat(2,minmax(0,1fr))!important}
   table{display:block;overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch}
 }
+@media (max-width:760px){body.in .mhead{display:flex!important}body.in .mtabs{display:grid!important}}
 @media (max-width:360px){.mhead .theme-pill{width:118px!important}.mt span{font-size:9px}}
 @media (prefers-reduced-motion:reduce){.mtabs,.mt-ind,.mt svg{animation:none!important;transition:none!important}}
 
@@ -4011,6 +4012,10 @@ applyPrefs();
   });
   if(mq.addEventListener) mq.addEventListener("change",placeTheme); else mq.addListener(placeTheme);
   placeLogo(); placeTheme(); syncTabs(view);
+  var shellEl=$("shell");
+  function markIn(){ document.body.classList.toggle("in",!shellEl.classList.contains("hidden")); }
+  new MutationObserver(markIn).observe(shellEl,{attributes:true,attributeFilter:["class"]});
+  markIn();
 })();
 
 /* Suggerimenti strumento: si filtrano mentre scrivi */
