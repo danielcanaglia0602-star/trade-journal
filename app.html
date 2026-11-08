@@ -1072,6 +1072,18 @@ table tbody tr:hover td{background:color-mix(in srgb,var(--accent) 8%,transparen
   .day .c{position:static;font-size:9px;padding:1px 6px;margin-top:1px}
   .day .c i{display:none}
 }
+
+/* Suggerimenti strumento: compaiono mentre scrivi */
+.symwrap{position:relative;display:block}
+.symsug{position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:60;display:none;padding:6px;border-radius:14px;
+  background:color-mix(in srgb,var(--panel) 96%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border:1px solid var(--line);box-shadow:0 18px 40px -14px rgba(0,0,0,.55);max-height:280px;overflow:auto}
+.symsug.open{display:block;animation:symIn .28s cubic-bezier(.2,.8,.2,1) both}
+@keyframes symIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.symsug button{display:flex;width:100%;justify-content:space-between;align-items:center;gap:10px;padding:9px 11px;border:0;background:transparent;color:var(--ink);border-radius:10px;cursor:pointer;font:600 14px var(--font-body);text-align:left;transition:background .2s ease,transform .2s ease}
+.symsug button small{font-size:11px;font-weight:500;color:var(--mute)}
+.symsug button:hover,.symsug button.on{background:color-mix(in srgb,var(--accent) 16%,transparent);transform:translateX(3px)}
+.symsug mark{background:none;color:var(--accent);font-weight:800}
 </style>
 </head>
 <body>
@@ -1146,8 +1158,7 @@ table tbody tr:hover td{background:color-mix(in srgb,var(--accent) 8%,transparen
         <h2>Nuova operazione</h2>
         <div class="row">
           <label>Data<input type="date" id="date" required></label>
-          <label>Strumento<input id="sym" list="symList" placeholder="es. XAUUSD, EURUSD" required maxlength="16" autocomplete="off"></label>
-          <datalist id="symList"><option value="XAUUSD"><option value="XAGUSD"><option value="XPTUSD"><option value="XPDUSD"><option value="XAUEUR"><option value="EURUSD"><option value="GBPUSD"><option value="USDJPY"><option value="USDCHF"><option value="AUDUSD"><option value="USDCAD"><option value="NZDUSD"><option value="EURGBP"><option value="EURJPY"><option value="EURCHF"><option value="EURAUD"><option value="EURCAD"><option value="EURNZD"><option value="GBPJPY"><option value="GBPCHF"><option value="GBPAUD"><option value="GBPCAD"><option value="GBPNZD"><option value="AUDJPY"><option value="AUDCAD"><option value="AUDCHF"><option value="AUDNZD"><option value="CADJPY"><option value="CADCHF"><option value="CHFJPY"><option value="NZDJPY"><option value="NZDCAD"><option value="NZDCHF"><option value="USDCNH"><option value="USDMXN"><option value="USDZAR"><option value="USDSGD"><option value="USDNOK"><option value="USDSEK"><option value="US500"><option value="NAS100"><option value="US30"><option value="USTEC"><option value="DE40"><option value="UK100"><option value="JP225"><option value="FR40"><option value="VIX"><option value="DXY"><option value="USOIL"><option value="UKOIL"><option value="NATGAS"><option value="BTCUSD"><option value="ETHUSD"><option value="SOLUSD"><option value="XRPUSD"><option value="BNBUSD"><option value="BTCUSDT"><option value="ETHUSDT"></datalist>
+          <label>Strumento<span class="symwrap"><input id="sym" placeholder="es. XAUUSD, EURUSD" required maxlength="16" autocomplete="off"><span class="symsug" id="symSug" role="listbox"></span></span></label>
         </div>
         <div class="seg" role="radiogroup" aria-label="Direzione">
           <input type="radio" name="dir" id="long" value="long" checked><label for="long">Long</label>
@@ -3995,6 +4006,51 @@ applyPrefs();
   if(mq.addEventListener) mq.addEventListener("change",placeTheme); else mq.addListener(placeTheme);
   placeLogo(); placeTheme(); syncTabs(view);
 })();
+
+/* Suggerimenti strumento: si filtrano mentre scrivi */
+var SYM_LIST=[
+ ["XAUUSD","Metallo"],["XAGUSD","Metallo"],["XPTUSD","Metallo"],["XPDUSD","Metallo"],["XAUEUR","Metallo"],
+ ["EURUSD","Forex"],["GBPUSD","Forex"],["USDJPY","Forex"],["USDCHF","Forex"],["AUDUSD","Forex"],["USDCAD","Forex"],["NZDUSD","Forex"],
+ ["EURGBP","Forex"],["EURJPY","Forex"],["EURCHF","Forex"],["EURAUD","Forex"],["EURCAD","Forex"],["EURNZD","Forex"],
+ ["GBPJPY","Forex"],["GBPCHF","Forex"],["GBPAUD","Forex"],["GBPCAD","Forex"],["GBPNZD","Forex"],
+ ["AUDJPY","Forex"],["AUDCAD","Forex"],["AUDCHF","Forex"],["AUDNZD","Forex"],["CADJPY","Forex"],["CADCHF","Forex"],
+ ["CHFJPY","Forex"],["NZDJPY","Forex"],["NZDCAD","Forex"],["NZDCHF","Forex"],
+ ["USDCNH","Forex"],["USDMXN","Forex"],["USDZAR","Forex"],["USDSGD","Forex"],["USDNOK","Forex"],["USDSEK","Forex"],
+ ["US500","Indice"],["NAS100","Indice"],["US30","Indice"],["USTEC","Indice"],["DE40","Indice"],["UK100","Indice"],["JP225","Indice"],["FR40","Indice"],["VIX","Indice"],["DXY","Indice"],
+ ["USOIL","Energia"],["UKOIL","Energia"],["NATGAS","Energia"],
+ ["BTCUSD","Crypto"],["ETHUSD","Crypto"],["SOLUSD","Crypto"],["XRPUSD","Crypto"],["BNBUSD","Crypto"],["BTCUSDT","Crypto"],["ETHUSDT","Crypto"]
+];
+var symIdx=-1,symMatches=[];
+function renderSymSug(){
+  var box=$("symSug"),v=$("sym").value.trim().toUpperCase();
+  symMatches=v?SYM_LIST.filter(function(x){return x[0].indexOf(v)===0}).slice(0,8):[];
+  symIdx=-1;
+  if(!symMatches.length){ box.classList.remove("open"); box.innerHTML=""; return }
+  box.innerHTML=symMatches.map(function(x,i){
+    var rest=x[0].slice(v.length);
+    return '<button type="button" data-i="'+i+'"><span><mark>'+esc(v)+'</mark>'+esc(rest)+'</span><small>'+x[1]+'</small></button>';
+  }).join("");
+  box.classList.add("open");
+}
+function pickSym(name){ $("sym").value=name; $("symSug").classList.remove("open"); $("symSug").innerHTML=""; symMatches=[]; }
+function moveSym(dir){
+  var btns=$("symSug").querySelectorAll("button"); if(!btns.length) return false;
+  symIdx=(symIdx+dir+btns.length)%btns.length;
+  btns.forEach(function(b,i){ b.classList.toggle("on",i===symIdx) });
+  return true;
+}
+$("sym").addEventListener("input",renderSymSug);
+$("sym").addEventListener("keydown",function(e){
+  if(e.key==="ArrowDown"){ if(moveSym(1)) e.preventDefault(); }
+  else if(e.key==="ArrowUp"){ if(moveSym(-1)) e.preventDefault(); }
+  else if(e.key==="Enter"){ if(symIdx>=0&&symMatches[symIdx]){ e.preventDefault(); pickSym(symMatches[symIdx][0]); } }
+  else if(e.key==="Escape"){ pickSym($("sym").value); }
+});
+$("sym").addEventListener("blur",function(){ setTimeout(function(){ $("symSug").classList.remove("open") },150) });
+$("symSug").addEventListener("mousedown",function(e){
+  var b=e.target.closest("button[data-i]"); if(!b) return;
+  e.preventDefault(); pickSym(symMatches[+b.getAttribute("data-i")][0]);
+});
 /* Avvio */
 if(!ready){
   $("auth").innerHTML='<div class="panel authbox"><h1>Configurazione mancante</h1><p class="sub">Inserisci URL e chiave Supabase in config.js.</p></div>';
