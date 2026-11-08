@@ -1091,6 +1091,53 @@ table tbody tr:hover td{background:color-mix(in srgb,var(--accent) 8%,transparen
 .symsug button small{font-size:11px;font-weight:500;color:var(--mute)}
 .symsug button:hover,.symsug button.on{background:color-mix(in srgb,var(--accent) 16%,transparent);transform:translateX(3px)}
 .symsug mark{background:none;color:var(--accent);font-weight:800}
+
+/* ===== Telefono: stessa struttura del PC, più leggibile e comoda da toccare ===== */
+@media (max-width:760px){
+  body{font-size:15px;line-height:1.5;-webkit-text-size-adjust:100%}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:radial-gradient(120% 60% at 0% 0%,rgba(34,197,94,.10),transparent 60%),radial-gradient(90% 50% at 100% 100%,rgba(59,130,246,.08),transparent 60%)}
+  #main,.app{position:relative;z-index:1}
+  #main{padding:88px 14px 136px!important}
+  h1{font-size:26px!important;line-height:1.15;letter-spacing:-.02em;margin:4px 0 6px!important}
+  .sub{font-size:14px;line-height:1.45;margin-bottom:14px}
+  .panel{padding:18px 16px!important;border-radius:22px!important;margin-bottom:14px}
+  .panel h2{font-size:18px!important;margin-bottom:12px}
+  .stats{gap:10px!important;margin-bottom:14px!important}
+  .stat{padding:14px 14px!important;border-radius:18px!important}
+  .stat span{font-size:12px!important}
+  .stat b,.big{font-size:22px!important;line-height:1.2}
+  .lab{font-size:12px;letter-spacing:.02em}
+  input,select,textarea{font-size:16px!important;padding:12px 14px!important;border-radius:14px!important;min-height:46px}
+  label{font-size:13px}
+  .btn,button.ghost{min-height:44px;font-size:15px!important;padding:10px 16px!important;border-radius:14px!important}
+  .seg label{min-height:42px}
+  .cal{gap:6px!important}
+  .day{min-height:74px!important;border-radius:16px!important;padding:7px 6px!important}
+  .day .d{font-size:12px!important}
+  .day .p{font-size:clamp(10px,3vw,13px)!important}
+  .wk span{font-size:11px!important}
+  .cal-tiles{gap:10px!important}
+  .cal-tile{padding:14px 14px!important;border-radius:18px!important}
+  .cal-tile b{font-size:19px!important}
+  .rk-card{padding:18px 16px!important}
+  .rk-name{font-size:28px!important}
+  .gd-title{font-size:24px!important}
+  .gd-phase{padding:18px 16px!important;border-radius:20px!important}
+  .gd-moods{gap:6px!important}
+  .gd-dot small{font-size:10px!important}
+  table{font-size:13px}
+  th,td{padding:9px 8px!important}
+  .mhead{height:64px!important;padding:0 16px!important;background:color-mix(in srgb,var(--bg) 88%,transparent)!important}
+  .mh-left img{height:38px!important}
+  .mtabs{left:12px!important;right:12px!important;bottom:calc(12px + env(safe-area-inset-bottom,0px))!important;height:72px!important;border-radius:28px!important;padding:7px!important}
+  .mt svg{width:24px!important;height:24px!important}
+  .mt span{font-size:10.5px!important;font-weight:700!important;letter-spacing:.02em!important}
+  .mt-ind{border-radius:22px!important}
+  .cm-post{padding:16px 0!important}
+  .cm-body{font-size:15px}
+  .cm-media{border-radius:18px!important}
+}
 </style>
 </head>
 <body>
