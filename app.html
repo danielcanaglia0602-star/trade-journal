@@ -1042,6 +1042,36 @@ table tbody tr:hover td{background:color-mix(in srgb,var(--accent) 8%,transparen
 }
 @media (max-width:360px){.mhead .theme-pill{width:118px!important}.mt span{font-size:9px}}
 @media (prefers-reduced-motion:reduce){.mtabs,.mt-ind,.mt svg{animation:none!important;transition:none!important}}
+
+/* ===== Calendario: caselle più curate ===== */
+.cal{gap:8px}
+.day{min-height:90px;padding:10px 11px;border-radius:18px;position:relative;overflow:hidden;
+  transition:transform .25s cubic-bezier(.2,.7,.2,1),box-shadow .3s ease,border-color .3s ease,background .3s ease}
+.day .d{font-size:12px;font-weight:600;color:var(--mute)}
+.day .p{font:800 15px/1.1 var(--font-title);letter-spacing:-.01em;margin-top:auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.day .c{position:absolute;top:8px;right:8px;font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;background:rgba(255,255,255,.08);color:var(--mute);white-space:nowrap}
+.day .c i{font-style:normal;font-weight:500}
+.day.win{background:linear-gradient(165deg,rgba(34,197,94,.24),rgba(34,197,94,.05));border-color:rgba(34,197,94,.45)}
+.day.loss{background:linear-gradient(165deg,rgba(239,68,68,.24),rgba(239,68,68,.05));border-color:rgba(239,68,68,.45)}
+.day.win .p{color:#4ade80}
+.day.loss .p{color:#f87171}
+.day.win .c{background:rgba(34,197,94,.22);color:#bbf7d0}
+.day.loss .c{background:rgba(239,68,68,.22);color:#fecaca}
+.day:hover{transform:translateY(-3px);box-shadow:0 14px 28px -16px rgba(0,0,0,.6)}
+.day.sel{box-shadow:0 0 0 2px var(--accent),0 14px 30px -16px var(--accent)}
+.day.out{opacity:.3}
+.wk span{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);padding-bottom:4px}
+@media (max-width:720px){
+  .cal{gap:5px}
+  .wk span{font-size:10px;letter-spacing:.02em}
+  .day{min-height:66px;padding:6px 5px;border-radius:12px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:2px}
+  .day .d{font-size:11px}
+  .day .p{font-size:clamp(9px,2.7vw,11.5px);font-weight:800;padding:2px 3px;border-radius:7px;max-width:100%;letter-spacing:-.02em}
+  .day.win .p{background:rgba(34,197,94,.18)}
+  .day.loss .p{background:rgba(239,68,68,.18)}
+  .day .c{position:static;font-size:9px;padding:1px 6px;margin-top:1px}
+  .day .c i{display:none}
+}
 </style>
 </head>
 <body>
@@ -1130,10 +1160,6 @@ table tbody tr:hover td{background:color-mix(in srgb,var(--accent) 8%,transparen
         <div class="row">
           <label>Quantità (lotti)<input type="number" id="size" step="any" min="0.0000001" required></label>
           <label>Commissioni<input type="number" id="fees" step="any" min="0" value="0"></label>
-        </div>
-        <div class="row">
-          <label>Moltiplicatore contratto<input type="number" id="cmult" step="any" min="0.0001" placeholder="automatico"></label>
-          <span class="muted" id="cmHint" style="font-size:12px;align-self:end;padding-bottom:8px"></span>
         </div>
         <label>Note<textarea id="note" maxlength="1000" placeholder="Setup, errori, emozioni…"></textarea></label>
         <div class="tf-photo">
@@ -1921,8 +1947,8 @@ function renderCalendario(){
   for(var i=0;i<42;i++){
     var d=new Date(start.getFullYear(),start.getMonth(),start.getDate()+i),k=ymd(d);
     var c=cnt[k]||0,v=dm[k];
-    cells+='<button type="button" class="day'+(d.getMonth()!==m?' out':'')+(calSel===k?' sel':'')+'" data-day="'+k+'">'+
-      '<span class="d">'+d.getDate()+'</span>'+(c?'<span class="p '+cls(v)+'">'+sgn(v)+'</span><span class="d">'+c+' op.</span>':'')+'</button>';
+    cells+='<button type="button" class="day'+(d.getMonth()!==m?' out':'')+(calSel===k?' sel':'')+(c&&v>0?' win':(c&&v<0?' loss':''))+'" data-day="'+k+'">'+
+      '<span class="d">'+d.getDate()+'</span>'+(c?'<span class="p '+cls(v)+'">'+sgn(v)+'</span><span class="c">'+c+'<i> op.</i></span>':'')+'</button>';
   }
   var monthList=inRange(trades,ymd(first),ymd(new Date(y,m+1,0)));
   var title=calMonth.toLocaleDateString("it-IT",{month:"long",year:"numeric"});
@@ -2725,7 +2751,7 @@ $("tradeForm").addEventListener("submit",async function(e){
   $("tradeMsg").textContent="";
   if(!sym||isNaN(entry)||isNaN(exit)||isNaN(size)||size<=0){$("tradeMsg").textContent="Controlla strumento, prezzi e quantità.";return}
   $("saveBtn").disabled=true;
-  var cm=parseFloat($("cmult").value)||contractMult(sym);
+  var cm=contractMult(sym);
   var row={user_id:user.id,trade_date:$("date").value,symbol:sym,
     direction:document.querySelector('input[name="dir"]:checked').value,
     entry_price:entry,exit_price:exit,size:size*cm,fees:fees,note:$("note").value.trim()};
@@ -3889,15 +3915,6 @@ function contractMult(sym){
   if(/^[A-Z]{6}$/.test(s)) return 100000;          // coppie forex: 1 lotto = 100.000 unità
   return 1;
 }
-function syncContractHint(){
-  var sym=$("sym").value.trim(),m=contractMult(sym);
-  if(!$("cmult").dataset.touched) $("cmult").value=m;
-  var v=parseFloat($("cmult").value)||m;
-  $("cmHint").textContent=sym?("1 lotto = "+v.toLocaleString("it-IT")+" unità"):"";
-}
-$("sym").addEventListener("input",syncContractHint);
-$("sym").addEventListener("change",syncContractHint);
-$("cmult").addEventListener("input",function(){ this.dataset.touched="1"; syncContractHint(); });
 
 /* Parole non consentite */
 var BANNED=[];
