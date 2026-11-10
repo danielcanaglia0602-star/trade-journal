@@ -1162,6 +1162,29 @@ table tbody tr:hover td{background:color-mix(in srgb,var(--accent) 8%,transparen
     box-shadow:0 24px 60px -18px rgba(0,0,0,.6)!important}
   #suMenu button{min-height:46px;font-size:15px;padding:10px 12px}
 }
+
+/* Cerca trader in Dashboard */
+.find-card{margin-bottom:18px}
+.find-h{display:flex;gap:12px;align-items:flex-start;margin-bottom:12px}
+.find-h h2{margin:0 0 2px;font-size:18px}
+.find-h p{margin:0;font-size:13px}
+.find-ico{width:40px;height:40px;border-radius:14px;display:grid;place-items:center;background:color-mix(in srgb,var(--accent) 14%,transparent);font-size:18px;flex:none}
+.find-in{width:100%;padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:color-mix(in srgb,var(--bg) 60%,transparent);color:var(--ink);font:inherit;outline:none;transition:border-color .25s,box-shadow .25s}
+.find-in:focus{border-color:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 18%,transparent)}
+.find-res{display:grid;gap:8px;margin-top:10px}
+.find-row{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--line);border-radius:16px;text-decoration:none;color:var(--ink);transition:transform .25s cubic-bezier(.2,.7,.2,1),border-color .25s,background .25s}
+.find-row:hover{transform:translateX(4px);border-color:color-mix(in srgb,var(--accent) 45%,var(--line));background:color-mix(in srgb,var(--accent) 6%,transparent)}
+.find-av{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;color:#0b0d10;font-weight:800;flex:none}
+.find-nm{display:grid;min-width:0;flex:1}
+.find-nm b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.find-nm small{color:var(--mute);font-size:12px}
+.find-go{font-size:12px;font-weight:700;color:var(--accent);white-space:nowrap}
+.find-empty{color:var(--mute);font-size:14px;padding:8px 2px}
+@media (max-width:760px){
+  .find-card{padding:16px!important}
+  .find-in{font-size:16px;min-height:46px}
+  .find-go{display:none}
+}
 </style>
 </head>
 <body>
@@ -1861,6 +1884,9 @@ function renderDashboard(){
   var pf=ms.pf==null?"—":ms.pf===Infinity?"∞":fmt(ms.pf);
   $("v-dashboard").innerHTML=
     '<h1>Ciao, '+esc(name)+'</h1><p class="sub">Il tuo riepilogo di oggi, '+dmy(to)+'</p>'+
+    '<section class="panel find-card"><div class="find-h"><span class="find-ico">🔎</span><div><h2>Cerca trader</h2><p class="muted">Scrivi il nome utente per vedere rank, rating e winrate di un altro trader.</p></div></div>'+
+    '<input id="dashFind" class="find-in" placeholder="Es. dan" autocomplete="off" aria-label="Cerca trader per nome utente">'+
+    '<div id="dashFindRes" class="find-res"></div></section>'+
     '<div class="hero">'+
       '<section class="panel"><span class="lab">Streak attuale</span><div class="big">'+streak+' giorni</div><p class="sub" style="margin:6px 0 0">Record: '+record+' giorni di fila con almeno un trade</p></section>'+
       rankCardHTML()+
@@ -2548,6 +2574,31 @@ $("trovaInput").addEventListener("input",function(){
   trovaTimer=setTimeout(runTrova,300);
 });
 renderTrovaHint("Scrivi il nome utente di un trader per trovarlo.");
+
+/* Ricerca trader dalla Dashboard */
+var dashFindTimer=null;
+async function runDashFind(){
+  var q=$("dashFind").value.trim(),box=$("dashFindRes");
+  if(!box) return;
+  if(q.length<2){ box.innerHTML='<div class="find-empty">Scrivi almeno 2 caratteri del nome utente.</div>'; return }
+  box.innerHTML='<div class="find-empty">Cerco…</div>';
+  var r=await sb.rpc("search_traders",{p_query:q});
+  if(r.error){ box.innerHTML='<div class="find-empty" style="color:var(--loss)">Ricerca non disponibile: '+esc(r.error.message)+'</div>'; return }
+  var rows=r.data||[];
+  if(!rows.length){ box.innerHTML='<div class="find-empty">Nessun trader pubblico con questo nome.</div>'; return }
+  box.innerHTML=rows.slice(0,6).map(function(t){
+    var col=t.rank_color||"#b87333";
+    return '<a class="find-row" href="profile.html?u='+encodeURIComponent(t.username)+'" target="_blank" rel="noopener">'+
+      '<span class="find-av" style="background:'+esc(col)+'">'+esc(t.username.charAt(0).toUpperCase())+'</span>'+
+      '<span class="find-nm"><b>'+esc(t.username)+'</b><small>'+esc(t.rank_name||"Bronze")+' · Rating '+(t.points||0)+'</small></span>'+
+      '<span class="find-go">Winrate →</span></a>';
+  }).join("");
+}
+$("v-dashboard").addEventListener("input",function(e){
+  if(e.target.id!=="dashFind") return;
+  clearTimeout(dashFindTimer);
+  dashFindTimer=setTimeout(runDashFind,300);
+});
 
 /* Profilo pubblico */
 var PRIV_KEYS=["rank","return","win","pf","dd","trades","streak","equity","history","markets","net","detail"];
