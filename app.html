@@ -1154,6 +1154,14 @@ table tbody tr:hover td{background:color-mix(in srgb,var(--accent) 8%,transparen
   .mhead{box-sizing:border-box!important;height:calc(64px + env(safe-area-inset-top,0px))!important;padding-top:env(safe-area-inset-top,0px)!important;align-items:center!important}
   #main{padding-top:calc(88px + env(safe-area-inset-top,0px))!important}
 }
+
+/* Telefono: menu del profilo che sale sopra la barra in basso */
+@media (max-width:760px){
+  #suMenu{position:fixed!important;left:12px!important;right:12px!important;top:auto!important;bottom:calc(92px + env(safe-area-inset-bottom,0px))!important;
+    width:auto!important;max-height:62vh!important;overflow:auto!important;z-index:95!important;border-radius:24px!important;padding:10px!important;
+    box-shadow:0 24px 60px -18px rgba(0,0,0,.6)!important}
+  #suMenu button{min-height:46px;font-size:15px;padding:10px 12px}
+}
 </style>
 </head>
 <body>
@@ -3292,7 +3300,7 @@ function toggleSideMenu(force){
 }
 $("suBtn").addEventListener("click",function(e){ e.stopPropagation(); toggleSideMenu() });
 document.addEventListener("click",function(e){
-  if(!e.target.closest("#sideUser")) toggleSideMenu(false);
+  if(!e.target.closest("#sideUser,#suMenu,#mtabs")) toggleSideMenu(false);
 });
 $("suMenu").addEventListener("click",function(e){
   var b=e.target.closest("[data-act]");
@@ -4072,14 +4080,21 @@ applyPrefs();
   document.querySelectorAll(".mt").forEach(function(b){
     b.addEventListener("click",function(){
       var v=b.getAttribute("data-mtab");
-      if(v) setView(v);
+      if(v==="impostazioni"){ toggleSideMenu(true); }
+      else if(v) setView(v);
       if(navigator.vibrate) navigator.vibrate(8);
     });
   });
   $("mhOut").addEventListener("click",function(){
     var o=document.querySelector('[data-act="logout"]'); if(o) o.click();
   });
-  if(mq.addEventListener) mq.addEventListener("change",placeTheme); else mq.addListener(placeTheme);
+  if(mq.addEventListener) mq.addEventListener("change",function(){ placeTheme(); placeMenu(); }); else mq.addListener(function(){ placeTheme(); placeMenu(); });
+  var sm=$("suMenu"),smHome={parent:sm.parentNode,next:sm.nextSibling};
+  function placeMenu(){
+    if(mq.matches) document.body.appendChild(sm);
+    else if(smHome.parent) smHome.parent.insertBefore(sm,smHome.next||null);
+  }
+  placeMenu();
   placeLogo(); placeTheme(); syncTabs(view);
   var shellEl=$("shell");
   function markIn(){ document.body.classList.toggle("in",!shellEl.classList.contains("hidden")); }
