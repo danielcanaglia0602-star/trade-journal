@@ -165,16 +165,6 @@ td.note{white-space:normal;color:var(--mute);max-width:200px}
 .adv[open] summary{margin-bottom:10px}
 .linkbox{display:flex;gap:8px;align-items:center;padding:6px 6px 6px 16px;border-radius:999px;border:1px solid var(--line);background:var(--bg);margin-top:18px}
 .linkbox input{border:0;background:transparent;box-shadow:none;padding:6px 0}
-.trova-search{position:relative;margin:6px 0 18px}
-.trova-search input{width:100%;padding:16px 22px 16px 52px;font-size:17px;border-radius:999px;border:1px solid var(--line);background:var(--panel)}
-.trova-search::before{content:"⌕";position:absolute;left:20px;top:50%;transform:translateY(-52%);font-size:22px;color:var(--mute)}
-.trader-row{display:flex;align-items:center;gap:16px;padding:14px 18px;border:1px solid var(--line);border-radius:20px;background:var(--panel);margin-bottom:10px;text-decoration:none;color:var(--ink);transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
-.trader-row:hover{transform:translateY(-2px);border-color:var(--accent);box-shadow:0 10px 24px -16px rgba(0,0,0,.3)}
-.trader-row .av{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-weight:700;color:#1a1d21;flex:none}
-.trader-row .nm{flex:1;min-width:0}
-.trader-row .nm b{display:block;font-size:16px}
-.trader-row .nm small{color:var(--mute);font-size:13px}
-.trader-row .go{font-size:13px;color:var(--accent);font-weight:700;white-space:nowrap}
 input[type=range]{padding:0;border:0;background:transparent;accent-color:var(--gain);width:100%}
 .bt-setup-grid{display:grid;grid-template-columns:1fr 1.2fr;gap:18px;align-items:start}
 .cap-wrap{position:relative;margin:26px 0 22px}
@@ -1163,28 +1153,6 @@ table tbody tr:hover td{background:color-mix(in srgb,var(--accent) 8%,transparen
   #suMenu button{min-height:46px;font-size:15px;padding:10px 12px}
 }
 
-/* Cerca trader in Dashboard */
-.find-card{margin-bottom:18px}
-.find-h{display:flex;gap:12px;align-items:flex-start;margin-bottom:12px}
-.find-h h2{margin:0 0 2px;font-size:18px}
-.find-h p{margin:0;font-size:13px}
-.find-ico{width:40px;height:40px;border-radius:14px;display:grid;place-items:center;background:color-mix(in srgb,var(--accent) 14%,transparent);font-size:18px;flex:none}
-.find-in{width:100%;padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:color-mix(in srgb,var(--bg) 60%,transparent);color:var(--ink);font:inherit;outline:none;transition:border-color .25s,box-shadow .25s}
-.find-in:focus{border-color:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 18%,transparent)}
-.find-res{display:grid;gap:8px;margin-top:10px}
-.find-row{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--line);border-radius:16px;text-decoration:none;color:var(--ink);transition:transform .25s cubic-bezier(.2,.7,.2,1),border-color .25s,background .25s}
-.find-row:hover{transform:translateX(4px);border-color:color-mix(in srgb,var(--accent) 45%,var(--line));background:color-mix(in srgb,var(--accent) 6%,transparent)}
-.find-av{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;color:#0b0d10;font-weight:800;flex:none}
-.find-nm{display:grid;min-width:0;flex:1}
-.find-nm b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.find-nm small{color:var(--mute);font-size:12px}
-.find-go{font-size:12px;font-weight:700;color:var(--accent);white-space:nowrap}
-.find-empty{color:var(--mute);font-size:14px;padding:8px 2px}
-@media (max-width:760px){
-  .find-card{padding:16px!important}
-  .find-in{font-size:16px;min-height:46px}
-  .find-go{display:none}
-}
 </style>
 </head>
 <body>
@@ -1217,7 +1185,6 @@ table tbody tr:hover td{background:color-mix(in srgb,var(--accent) 8%,transparen
       <button type="button" data-view="operazioni">Operazioni</button>
       <button type="button" data-view="backtest" id="navBacktest" class="hidden">Backtest</button>
       <button type="button" data-view="community">Community</button>
-      <button type="button" data-view="trova" class="hidden">Trova trader</button>
       <button type="button" data-view="leaderboard" class="hidden">Leaderboard</button>
       <button type="button" data-view="impostazioni" class="hidden">Impostazioni e account</button>
     </nav>
@@ -1485,13 +1452,6 @@ table tbody tr:hover td{background:color-mix(in srgb,var(--accent) 8%,transparen
         </div>
       </div>
     </section>
-
-    <section id="v-trova" class="view hidden">
-      <h1>Trova trader</h1>
-      <p class="sub">Cerca un trader per nome utente e apri il suo profilo pubblico.</p>
-      <div class="trova-search"><input id="trovaInput" placeholder="Scrivi il nome utente, es. dan" autocomplete="off" aria-label="Cerca trader"></div>
-      <div id="trovaRes"></div>
-    </section>
     <section id="v-leaderboard" class="view hidden">
       <h1>Leaderboard</h1>
       <p class="sub">Compete. Improve. Dominate.</p>
@@ -1649,7 +1609,7 @@ table tbody tr:hover td{background:color-mix(in srgb,var(--accent) 8%,transparen
         <form id="profForm" autocomplete="off" style="margin-top:16px">
           <label>Nome utente<input id="profUser" maxlength="20" required placeholder="es. dan_trader"></label>
           <div class="switches">
-            <label class="switch"><div><b>Profilo pubblico</b><small>Chiunque abbia il link può vedere il tuo profilo e trovarlo nella ricerca</small></div><input type="checkbox" id="profPublic"><span class="track"></span></label>
+            <label class="switch"><div><b>Profilo pubblico</b><small>Chiunque abbia il link può vedere il tuo profilo</small></div><input type="checkbox" id="profPublic"><span class="track"></span></label>
           </div>
           <div class="msg" id="profMsg" role="alert" style="margin-top:12px"></div>
           <div style="margin-top:14px"><button class="btn" type="submit" id="profBtn">Salva profilo</button></div>
@@ -1884,9 +1844,6 @@ function renderDashboard(){
   var pf=ms.pf==null?"—":ms.pf===Infinity?"∞":fmt(ms.pf);
   $("v-dashboard").innerHTML=
     '<h1>Ciao, '+esc(name)+'</h1><p class="sub">Il tuo riepilogo di oggi, '+dmy(to)+'</p>'+
-    '<section class="panel find-card"><div class="find-h"><span class="find-ico">🔎</span><div><h2>Cerca trader</h2><p class="muted">Scrivi il nome utente per vedere rank, rating e winrate di un altro trader.</p></div></div>'+
-    '<input id="dashFind" class="find-in" placeholder="Es. dan" autocomplete="off" aria-label="Cerca trader per nome utente">'+
-    '<div id="dashFindRes" class="find-res"></div></section>'+
     '<div class="hero">'+
       '<section class="panel"><span class="lab">Streak attuale</span><div class="big">'+streak+' giorni</div><p class="sub" style="margin:6px 0 0">Record: '+record+' giorni di fila con almeno un trade</p></section>'+
       rankCardHTML()+
@@ -2549,56 +2506,6 @@ async function openSession(id){
 }
 function stopAll(){bStop();}
 function renderBacktest(){updateBt();renderSessions()}
-
-/* Trova trader */
-var trovaTimer=null;
-function renderTrovaHint(t){ $("trovaRes").innerHTML='<div class="empty">'+t+'</div>' }
-async function runTrova(){
-  var q=$("trovaInput").value.trim();
-  if(q.length<2){ renderTrovaHint("Scrivi almeno 2 caratteri del nome utente."); return }
-  $("trovaRes").innerHTML='<div class="empty">Cerco…</div>';
-  var r=await sb.rpc("search_traders",{p_query:q});
-  if(r.error){ $("trovaRes").innerHTML='<div class="empty" style="color:var(--loss)">Ricerca non disponibile: '+esc(r.error.message)+'</div>'; return }
-  var rows=r.data||[];
-  if(!rows.length){ renderTrovaHint("Nessun trader pubblico trovato con questo nome."); return }
-  $("trovaRes").innerHTML=rows.map(function(t){
-    var col=t.rank_color||"#b87333";
-    return '<a class="trader-row" href="profile.html?u='+encodeURIComponent(t.username)+'">'+
-      '<span class="av" style="background:'+esc(col)+'">'+esc(t.username.charAt(0).toUpperCase())+'</span>'+
-      '<span class="nm"><b>'+esc(t.username)+'</b><small>'+esc(t.rank_name||"Bronze")+' · Rating '+(t.points||0)+'</small></span>'+
-      '<span class="go">Apri profilo →</span></a>';
-  }).join("");
-}
-$("trovaInput").addEventListener("input",function(){
-  clearTimeout(trovaTimer);
-  trovaTimer=setTimeout(runTrova,300);
-});
-renderTrovaHint("Scrivi il nome utente di un trader per trovarlo.");
-
-/* Ricerca trader dalla Dashboard */
-var dashFindTimer=null;
-async function runDashFind(){
-  var q=$("dashFind").value.trim(),box=$("dashFindRes");
-  if(!box) return;
-  if(q.length<2){ box.innerHTML='<div class="find-empty">Scrivi almeno 2 caratteri del nome utente.</div>'; return }
-  box.innerHTML='<div class="find-empty">Cerco…</div>';
-  var r=await sb.rpc("search_traders",{p_query:q});
-  if(r.error){ box.innerHTML='<div class="find-empty" style="color:var(--loss)">Ricerca non disponibile: '+esc(r.error.message)+'</div>'; return }
-  var rows=r.data||[];
-  if(!rows.length){ box.innerHTML='<div class="find-empty">Nessun trader pubblico con questo nome.</div>'; return }
-  box.innerHTML=rows.slice(0,6).map(function(t){
-    var col=t.rank_color||"#b87333";
-    return '<a class="find-row" href="profile.html?u='+encodeURIComponent(t.username)+'" target="_blank" rel="noopener">'+
-      '<span class="find-av" style="background:'+esc(col)+'">'+esc(t.username.charAt(0).toUpperCase())+'</span>'+
-      '<span class="find-nm"><b>'+esc(t.username)+'</b><small>'+esc(t.rank_name||"Bronze")+' · Rating '+(t.points||0)+'</small></span>'+
-      '<span class="find-go">Winrate →</span></a>';
-  }).join("");
-}
-$("v-dashboard").addEventListener("input",function(e){
-  if(e.target.id!=="dashFind") return;
-  clearTimeout(dashFindTimer);
-  dashFindTimer=setTimeout(runDashFind,300);
-});
 
 /* Profilo pubblico */
 var PRIV_KEYS=["rank","return","win","pf","dd","trades","streak","equity","history","markets","net","detail"];
@@ -4015,7 +3922,7 @@ $("cmList").addEventListener("click",async function(e){
 
 /* ---- Passata grande: emoji, notifiche, luce sui pannelli ---- */
 (function(){
-  var NAV={dashboard:"📊",oggi:"🗓️",calendario:"📅",operazioni:"🧾",community:"💬",backtest:"🎯",trova:"🔎",leaderboard:"🏆",impostazioni:"⚙️",supporto:"💌",privacy:"🛡️"};
+  var NAV={dashboard:"📊",oggi:"🗓️",calendario:"📅",operazioni:"🧾",community:"💬",backtest:"🎯",leaderboard:"🏆",impostazioni:"⚙️",supporto:"💌",privacy:"🛡️"};
   document.querySelectorAll(".nav button[data-view]").forEach(function(b){
     var k=b.getAttribute("data-view"),e=document.createElement("span");
     e.className="em";e.setAttribute("aria-hidden","true");e.textContent=NAV[k]||"•";
